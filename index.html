@@ -1196,7 +1196,7 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 <script>
 const SUPABASE_URL = 'https://qodxbgbjbkkstndfhueo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Xvhx-Uo6ZnAENV7bGfmuPA_f8HRIDMR';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 
 /* ================================================================
@@ -1326,9 +1326,9 @@ async function submitClientAuth(){
   }
   
   toast('⏳ Connexion en cours...', 'ok');
-  let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  let { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error) {
-    let { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+    let { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password });
     if (signUpError) {
       toast('❌ Erreur: ' + signUpError.message, 'err');
       return;
@@ -1368,7 +1368,7 @@ function handleLoginSuccess(email) {
 }
 
 async function clientLogout() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   currentUser = null;
   clientAuth = false;
   $('clientAuthLabel').innerText = 'Se connecter';
@@ -1389,17 +1389,17 @@ async function clientLogout() {
 
 async function loadUserData() {
   if(!currentUser) return;
-  const { data: profile } = await supabase.from('profiles').select('credits').eq('id', currentUser.id).single();
+  const { data: profile } = await sb.from('profiles').select('credits').eq('id', currentUser.id).single();
   if (profile) {
     credits = profile.credits;
     updateCreditsUI();
   } else {
     credits = 20;
     updateCreditsUI();
-    await supabase.from('profiles').insert({ id: currentUser.id, credits: 20 });
+    await sb.from('profiles').insert({ id: currentUser.id, credits: 20 });
   }
   
-  const { data: favs } = await supabase.from('favorites').select('permit_id').eq('user_id', currentUser.id);
+  const { data: favs } = await sb.from('favorites').select('permit_id').eq('user_id', currentUser.id);
   favorites.clear();
   if (favs) favs.forEach(f => favorites.add(f.permit_id));
   
@@ -1411,7 +1411,7 @@ async function saveUserCredits(newCredits) {
   credits = newCredits;
   updateCreditsUI();
   if(currentUser) {
-    await supabase.from('profiles').upsert({ id: currentUser.id, credits });
+    await sb.from('profiles').upsert({ id: currentUser.id, credits });
   }
 }
 
@@ -1664,12 +1664,12 @@ async function toggleFav(id){
   if(favorites.has(id)){
     favorites.delete(id);
     toast('Retiré de vos sélections');
-    if(currentUser) await supabase.from('favorites').delete().match({ user_id: currentUser.id, permit_id: id });
+    if(currentUser) await sb.from('favorites').delete().match({ user_id: currentUser.id, permit_id: id });
   }
   else{
     favorites.add(id);
     toast('⭐ Ajouté à vos sélections','ok');
-    if(currentUser) await supabase.from('favorites').insert({ user_id: currentUser.id, permit_id: id });
+    if(currentUser) await sb.from('favorites').insert({ user_id: currentUser.id, permit_id: id });
   }
   saveState();renderFavs();
   if(currentDetail===id)openDetail(id,detailTab);
@@ -2212,7 +2212,7 @@ updateCreditsUI();
   loadData();
   
   // 4. Check Supabase session
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  sb.auth.getSession().then(({ data: { session } }) => {
     if (session) {
       currentUser = session.user;
       handleLoginSuccess(currentUser.email);

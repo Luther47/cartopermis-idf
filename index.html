@@ -95,6 +95,10 @@ input,select{font-family:inherit;color:var(--text)}
 .sidebar-footer{border-top:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
 .sidebar-footer .cr{color:var(--accent);display:flex;align-items:center;gap:7px}
 .sidebar-footer .settings{color:var(--text2);font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px}
+.site-footer{border-top:1px solid var(--border);background:var(--panel);padding:12px 22px;display:flex;align-items:center}
+.admin-link{display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;padding:6px 4px}
+.admin-link:hover{color:var(--text2)}
+.admin-link .lucide{width:14px;height:14px}
 hr.sep{border:none;border-top:1px solid var(--border);margin:16px 0}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);font-weight:600;background:var(--panel2);padding:5px 10px;border-radius:999px;border:1px solid var(--border)}
@@ -816,7 +820,6 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
     <button data-view="search">Recherche avancée</button>
     <button data-view="stats">Données &amp; Rapports</button>
     <button data-view="faq">Contact &amp; FAQ</button>
-    <button data-view="admin">Administration</button>
   </nav>
   <div class="spacer"></div>
   <button class="btn btn-ghost" id="clientAuthBtn" onclick="openClientAuthModal()" style="padding:7px 12px;font-size:12.5px;margin-right:8px;border:1.5px solid var(--accent);color:var(--accent)">
@@ -1146,6 +1149,10 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 
 </div><!-- /main -->
 
+<footer class="site-footer">
+  <button class="admin-link" data-view="admin" onclick="showView('admin')"><i data-lucide="shield-check" aria-hidden="true"></i> Administration</button>
+</footer>
+
 <!-- ===== MODAL CRÉDITS / PRICING ===== -->
 <div class="modal-overlay" id="creditsModal">
   <div class="modal">
@@ -1328,15 +1335,23 @@ async function submitClientAuth(){
   toast('⏳ Connexion en cours...', 'ok');
   let { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error) {
+    if(error.message && error.message.toLowerCase().includes('email not confirmed')){
+      toast('📧 Confirmez votre e-mail (lien reçu à l\'inscription) avant de vous connecter.','err');
+      return;
+    }
     let { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password });
     if (signUpError) {
       toast('❌ Erreur: ' + signUpError.message, 'err');
       return;
     }
+    if(!signUpData.session){
+      toast('✅ Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.', 'ok');
+      return;
+    }
     data = signUpData;
     toast('✅ Compte créé avec succès !', 'ok');
   }
-  
+
   currentUser = data.user;
   handleLoginSuccess(currentUser.email);
 }
@@ -1396,7 +1411,8 @@ async function loadUserData() {
   } else {
     credits = 20;
     updateCreditsUI();
-    await sb.from('profiles').insert({ id: currentUser.id, credits: 20 });
+    const { error: insertError } = await sb.from('profiles').insert({ id: currentUser.id, credits: 20 });
+    if(insertError) console.error('profiles insert', insertError);
   }
   
   const { data: favs } = await sb.from('favorites').select('permit_id').eq('user_id', currentUser.id);
@@ -1411,7 +1427,8 @@ async function saveUserCredits(newCredits) {
   credits = newCredits;
   updateCreditsUI();
   if(currentUser) {
-    await sb.from('profiles').upsert({ id: currentUser.id, credits });
+    const { error } = await sb.from('profiles').upsert({ id: currentUser.id, credits });
+    if(error) console.error('profiles upsert', error);
   }
 }
 
@@ -2039,10 +2056,9 @@ function renderAdmin(){
         <div class="login-box">
           <h2>🔐 Administration</h2>
           <div class="sub">Accès réservé aux gestionnaires de la plateforme.</div>
-          <input type="text" id="admUser" placeholder="Identifiant" value="">
+          <input type="email" id="admUser" placeholder="Adresse e-mail" value="">
           <input type="password" id="admPass" placeholder="Mot de passe" value="">
           <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Se connecter</button>
-          <div class="hint">Démo : identifiant <b>admin</b> · mot de passe <b>demo</b></div>
         </div>
       </div></div>`;
     return;
@@ -2069,9 +2085,11 @@ function renderAdmin(){
   renderAdminTab();
   refreshIcons(v);
 }
+const ADMIN_EMAIL='teddycoronak@gmail.com';
+const ADMIN_PASSWORD='Admin147852@';
 function adminLogin(){
-  if($('admUser').value==='admin'&&$('admPass').value==='demo'){adminAuth=true;toast('👋 Bienvenue dans le back-office','ok');renderAdmin()}
-  else toast('❌ Identifiants incorrects (essayez admin / demo)','err');
+  if($('admUser').value.trim().toLowerCase()===ADMIN_EMAIL&&$('admPass').value===ADMIN_PASSWORD){adminAuth=true;toast('👋 Bienvenue dans le back-office','ok');renderAdmin()}
+  else toast('❌ Identifiants incorrects','err');
 }
 function renderAdminTab(){
   const c=$('adminContent');

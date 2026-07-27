@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CartoPermis IDF — Visualisez et explorez les permis de construire en Île-de-France</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{
+  --bg:#f4f5fb; --panel:#ffffff; --panel2:#f8f8fd; --border:#e7e8f2;
+  --text:#1e2130; --text2:#6b7089; --text3:#9ca0b8;
+  --accent:#6d4df6; --accent2:#8b6ff8; --accent-soft:#efeafe; --accent-soft2:#f5f1ff;
+  --green:#22c55e; --green-soft:#e4f8ec; --green-text:#15803d;
+  --blue:#3b82f6; --blue-soft:#e3edfd; --blue-text:#1d4ed8;
+  --red:#ef4444; --red-soft:#fde7e7; --red-text:#b91c1c;
+  --amber:#f59e0b; --amber-soft:#fdf3e0; --amber-text:#b45309;
+  --shadow:0 10px 30px rgba(30,33,48,.08); --shadow-sm:0 3px 10px rgba(30,33,48,.06);
+  --radius:16px;
+}
+html.dark{
+  --bg:#101322; --panel:#181c30; --panel2:#1e2340; --border:#272d4d;
+  --text:#eef0fa; --text2:#a3a8c7; --text3:#6e7395;
+  --accent:#8b6ff8; --accent2:#a78bfa; --accent-soft:#2a2450; --accent-soft2:#231f42;
+  --green-soft:#11301f; --green-text:#4ade80;
+  --blue-soft:#152647; --blue-text:#7cabfb;
+  --red-soft:#3a1620; --red-text:#f87f7f;
+  --amber-soft:#33240c; --amber-text:#fbbf24;
+  --shadow:0 10px 30px rgba(0,0,0,.4); --shadow-sm:0 3px 10px rgba(0,0,0,.3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;transition:background .3s}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;color:var(--text)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== TOP BAR ===== */
+.topbar{height:58px;min-height:58px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;z-index:1200;position:relative}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:-.2px}
+.logo-badge{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px 12px rgba(109,77,246,.35)}
+.logo small{display:block;font-weight:500;font-size:10.5px;color:var(--text3);letter-spacing:0}
+.nav{display:flex;gap:2px;margin-left:14px}
+.nav button{padding:8px 14px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--text2);transition:.15s}
+.nav button:hover{background:var(--panel2);color:var(--text)}
+.nav button.active{background:var(--accent-soft);color:var(--accent)}
+.topbar .spacer{flex:1}
+.credits-chip{display:flex;align-items:center;gap:7px;background:var(--accent-soft2);border:1px solid var(--accent-soft);padding:7px 13px;border-radius:999px;font-weight:700;font-size:13px;color:var(--accent);cursor:pointer;transition:.15s}
+.credits-chip:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.btn{padding:9px 16px;border-radius:11px;font-weight:700;font-size:13px;transition:.15s;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(109,77,246,.35)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(109,77,246,.45)}
+.btn-ghost{background:var(--panel2);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text)}
+.icon-btn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text2);background:var(--panel2);border:1px solid var(--border);font-size:15px;transition:.15s}
+.icon-btn:hover{color:var(--accent)}
+
+/* ===== LAYOUT ===== */
+.main{flex:1;display:flex;overflow:hidden;position:relative}
+.view{display:none;flex:1;overflow:hidden}
+.view.active{display:flex}
+
+/* ===== SIDEBAR (carte) ===== */
+.sidebar{width:330px;min-width:330px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:900}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:18px}
+.search-box{position:relative;margin-bottom:18px}
+.search-box input{width:100%;padding:11px 38px 11px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--panel2);font-size:13.5px;outline:none;transition:.15s}
+.search-box input:focus{border-color:var(--accent)}
+.search-box .s-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text3)}
+.side-title{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.side-title .count{font-size:11px;color:var(--text3);font-weight:600}
+.recent-item{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:.15s;background:var(--panel)}
+.recent-item:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.recent-item .r-name{font-weight:700;font-size:12.5px}
+.recent-item .r-type{font-size:11px;color:var(--text3);margin-top:2px}
+.recent-item .r-del{color:var(--text3);font-size:13px;padding:4px}
+.recent-item .r-del:hover{color:var(--red)}
+.empty-note{font-size:12px;color:var(--text3);padding:8px 2px 4px;line-height:1.5}
+.opt-row{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;font-size:13px;color:var(--text2);font-weight:600}
+.toggle{width:40px;height:22px;border-radius:999px;background:var(--border);position:relative;transition:.2s;flex:none}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{left:21px}
+.filter-group{margin-bottom:14px}
+.filter-group label{display:block;font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.filter-group select,.filter-group input{width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel);font-size:13px;outline:none;-webkit-appearance:none;appearance:none;transition:.15s}
+.filter-group select:focus,.filter-group input:focus{border-color:var(--accent)}
+.filter-group .dual{display:flex;gap:8px}
+.sidebar-footer{border-top:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
+.sidebar-footer .cr{color:var(--accent);display:flex;align-items:center;gap:7px}
+.sidebar-footer .settings{color:var(--text2);font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px}
+hr.sep{border:none;border-top:1px solid var(--border);margin:16px 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);font-weight:600;background:var(--panel2);padding:5px 10px;border-radius:999px;border:1px solid var(--border)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+
+/* ===== MAP ===== */
+.map-wrap{flex:1;position:relative}
+#map{position:absolute;inset:0;background:#dfe3ec}
+html.dark #map{background:#0d1020}
+.map-topbox{position:absolute;top:16px;left:16px;z-index:800;background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:12px 16px;display:flex;align-items:center;gap:12px;min-width:220px}
+.map-topbox .city{font-weight:800;font-size:15px}
+.map-topbox .sub{font-size:11.5px;color:var(--text3)}
+.map-count{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:800;background:var(--panel);border-radius:999px;box-shadow:var(--shadow);padding:9px 18px;font-size:12.5px;font-weight:700;color:var(--accent)}
+.map-style-switch{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:800;background:var(--panel);border-radius:999px;box-shadow:var(--shadow);padding:5px;display:flex;gap:4px}
+.map-style-switch button{padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--text2)}
+.map-style-switch button.active{background:var(--accent);color:#fff}
+.leaflet-container{font-family:inherit}
+.pmarker{border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(109,77,246,.25)!important}
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:var(--accent)!important;color:#fff!important;font-weight:700;font-family:inherit}
+.leaflet-popup-content-wrapper{border-radius:14px;box-shadow:var(--shadow);background:var(--panel);color:var(--text)}
+.leaflet-popup-tip{background:var(--panel)}
+.leaflet-popup-content{margin:14px 16px;font-family:inherit;min-width:230px}
+.pop-ref{font-size:11px;font-weight:800;color:var(--accent);background:var(--accent-soft2);border:1px solid var(--accent-soft);padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:7px}
+.pop-title{font-weight:800;font-size:13.5px;margin-bottom:3px}
+.pop-addr{font-size:12px;color:var(--text2);margin-bottom:8px}
+.pop-obj{font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pop-link{color:var(--accent);font-weight:700;font-size:12.5px;cursor:pointer;text-decoration:underline}
+
+/* ===== BADGES ===== */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
+.badge.acc{background:var(--green-soft);color:var(--green-text)}
+.badge.enc{background:var(--blue-soft);color:var(--blue-text)}
+.badge.ref{background:var(--red-soft);color:var(--red-text)}
+
+/* ===== DETAIL PANEL ===== */
+.detail-panel{width:380px;min-width:380px;background:var(--panel);border-left:1px solid var(--border);display:none;flex-direction:column;overflow:hidden;z-index:900}
+.detail-panel.open{display:flex}
+.detail-head{padding:16px 20px 0;display:flex;justify-content:flex-end}
+.detail-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
+.dp-card{background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+.dp-ref-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.dp-ref{font-size:12px;font-weight:800;color:var(--text2);background:var(--panel);border:1px solid var(--border);padding:5px 11px;border-radius:8px}
+.dp-title{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-.3px;margin-bottom:9px}
+.dp-addr{font-size:13px;color:var(--text2);font-weight:600;display:flex;gap:7px;align-items:flex-start;margin-bottom:16px;line-height:1.4}
+.dp-tabs{display:flex;gap:18px;border-bottom:1.5px solid var(--border);margin-bottom:16px}
+.dp-tabs button{padding:9px 2px;font-size:13.5px;font-weight:700;color:var(--text3);border-bottom:2.5px solid transparent;margin-bottom:-1.5px}
+.dp-tabs button.active{color:var(--accent);border-color:var(--accent)}
+.dp-field{margin-bottom:15px}
+.dp-field .f-label{font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.dp-field .f-value{font-size:13.5px;line-height:1.5;color:var(--text)}
+.dp-lockbox{background:linear-gradient(135deg,var(--accent-soft2),var(--accent-soft));border:1.5px dashed var(--accent);border-radius:14px;padding:18px;text-align:center;margin:6px 0 14px}
+.dp-lockbox .lk-icon{font-size:22px;margin-bottom:6px}
+.dp-lockbox p{font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-cell{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+.info-cell .ic-label{font-size:11px;color:var(--text3);font-weight:700;margin-bottom:5px}
+.info-cell .ic-value{font-size:17px;font-weight:800}
+.dp-actions{display:flex;gap:9px;margin-top:4px}
+.dp-actions .btn{flex:1}
+.fav-btn.faved{color:var(--amber)}
+
+/* ===== PAGES (accueil, recherche, données...) ===== */
+.page{flex:1;overflow-y:auto;padding:34px 40px}
+.page-inner{max-width:1100px;margin:0 auto}
+.hero{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 60%,#b79cfd 100%);border-radius:24px;padding:52px 48px;color:#fff;position:relative;overflow:hidden;margin-bottom:28px}
+.hero::after{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.12)}
+.hero::before{content:'';position:absolute;right:80px;bottom:-90px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin-bottom:10px;max-width:640px}
+.hero p{font-size:15.5px;opacity:.92;max-width:560px;line-height:1.55;margin-bottom:24px}
+.hero .btn-white{background:#fff;color:var(--accent);box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.hero .btn-outline{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.5)}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-sm)}
+.stat-card .sc-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:13px}
+.stat-card .sc-value{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.stat-card .sc-label{font-size:12.5px;color:var(--text2);font-weight:600;margin-top:3px}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.feature{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:.2s;cursor:pointer}
+.feature:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--accent)}
+.feature .f-icon{font-size:26px;margin-bottom:12px}
+.feature h3{font-size:15.5px;font-weight:800;margin-bottom:7px}
+.feature p{font-size:13px;color:var(--text2);line-height:1.55}
+.section-title{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:16px}
+
+/* ===== PRICING ===== */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px}
+.price-card{background:var(--panel);border:1.5px solid var(--border);border-radius:20px;padding:28px;text-align:center;transition:.2s;position:relative}
+.price-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.price-card.pop{border-color:var(--accent);box-shadow:0 12px 34px rgba(109,77,246,.18)}
+.price-card .pc-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:10.5px;font-weight:800;padding:4px 13px;border-radius:999px;letter-spacing:.4px}
+.price-card h4{font-size:14px;font-weight:800;color:var(--text2);margin-bottom:9px}
+.price-card .pc-credits{font-size:32px;font-weight:800;letter-spacing:-1px}
+.price-card .pc-credits small{font-size:13px;font-weight:700;color:var(--text3)}
+.price-card .pc-price{font-size:17px;color:var(--accent);font-weight:800;margin:9px 0 4px}
+.price-card .pc-unit{font-size:11.5px;color:var(--text3);margin-bottom:17px}
+.price-card ul{list-style:none;text-align:left;margin-bottom:19px}
+.price-card li{font-size:12.5px;color:var(--text2);padding:5px 0;display:flex;gap:8px}
+.price-card li::before{content:'✓';color:var(--green);font-weight:800}
+
+/* ===== SEARCH PAGE ===== */
+.search-controls{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.search-controls .search-box{flex:1;min-width:260px;margin:0}
+.search-controls select{padding:11px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--panel);font-size:13px;outline:none}
+.result-list{display:flex;flex-direction:column;gap:10px}
+.result-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:17px 20px;display:flex;align-items:center;gap:18px;cursor:pointer;transition:.15s}
+.result-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.result-card .rc-dot{width:11px;height:11px;border-radius:50%;flex:none}
+.result-card .rc-main{flex:1;min-width:0}
+.result-card .rc-title{font-weight:800;font-size:13.5px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.result-card .rc-ref{font-size:11px;color:var(--text3);font-weight:700}
+.result-card .rc-addr{font-size:12.5px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-card .rc-date{font-size:11.5px;color:var(--text3);white-space:nowrap}
+.pagination{display:flex;gap:6px;justify-content:center;margin:22px 0}
+.pagination button{min-width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--panel);font-size:12.5px;font-weight:700;color:var(--text2)}
+.pagination button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pagination button:disabled{opacity:.4;cursor:default}
+
+/* ===== CHARTS ===== */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-sm)}
+.chart-card.wide{grid-column:1/-1}
+.chart-card h3{font-size:14.5px;font-weight:800;margin-bottom:16px}
+.chart-box{position:relative;height:260px}
+
+/* ===== FAQ ===== */
+.faq-item{background:var(--panel);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.faq-item summary{padding:17px 20px;font-weight:700;font-size:14px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.faq-item summary::after{content:'+';font-size:19px;color:var(--accent);font-weight:600}
+.faq-item[open] summary::after{content:'–'}
+.faq-item .faq-body{padding:0 20px 17px;font-size:13.5px;color:var(--text2);line-height:1.65}
+
+/* ===== ADMIN ===== */
+.admin-layout{display:flex;flex:1;overflow:hidden}
+.admin-side{width:230px;min-width:230px;background:var(--panel);border-right:1px solid var(--border);padding:20px 12px}
+.admin-side button{display:flex;align-items:center;gap:11px;width:100%;padding:11px 14px;border-radius:11px;font-size:13.5px;font-weight:600;color:var(--text2);margin-bottom:3px;text-align:left}
+.admin-side button:hover{background:var(--panel2)}
+.admin-side button.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.admin-content{flex:1;overflow-y:auto;padding:28px 32px}
+.admin-table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.admin-table th{text-align:left;font-size:11.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;padding:13px 16px;background:var(--panel2);border-bottom:1px solid var(--border)}
+.admin-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table .t-actions button{padding:5px 9px;border-radius:8px;font-size:12px;font-weight:700}
+.admin-table .t-edit{color:var(--accent)}
+.admin-table .t-del{color:var(--red)}
+.login-box{max-width:400px;margin:60px auto;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:36px;box-shadow:var(--shadow)}
+.login-box h2{font-size:20px;font-weight:800;margin-bottom:6px}
+.login-box .sub{font-size:13px;color:var(--text2);margin-bottom:22px}
+.login-box input{width:100%;padding:12px 14px;border-radius:11px;border:1.5px solid var(--border);background:var(--panel2);font-size:13.5px;outline:none;margin-bottom:12px}
+.login-box input:focus{border-color:var(--accent)}
+.hint{font-size:11.5px;color:var(--text3);margin-top:10px;text-align:center}
+
+/* ===== MODALS ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,17,32,.55);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--panel);border-radius:22px;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.35);position:relative;animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal .m-close{position:absolute;top:18px;right:18px}
+.modal h2{font-size:21px;font-weight:800;margin-bottom:6px;letter-spacing:-.3px}
+.modal .m-sub{font-size:13.5px;color:var(--text2);margin-bottom:24px}
+.stripe-form{max-width:420px}
+.stripe-head{display:flex;align-items:center;justify-content:space-between;background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.stripe-head .sh-pack{font-weight:800;font-size:14.5px}
+.stripe-head .sh-price{font-weight:800;font-size:18px;color:var(--accent)}
+.stripe-field{margin-bottom:14px}
+.stripe-field label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.stripe-field input{width:100%;padding:12px 14px;border-radius:11px;border:1.5px solid var(--border);background:var(--panel);font-size:14px;outline:none;transition:.15s}
+.stripe-field input:focus{border-color:#635bff;box-shadow:0 0 0 3px rgba(99,91,255,.15)}
+.stripe-row{display:flex;gap:12px}
+.stripe-row .stripe-field{flex:1}
+.stripe-badge{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11.5px;color:var(--text3);margin-top:14px}
+.stripe-pay{width:100%;background:#635bff;color:#fff;padding:13px;border-radius:11px;font-weight:800;font-size:14.5px;margin-top:6px;transition:.15s}
+.stripe-pay:hover{background:#5249f0}
+.stripe-pay:disabled{opacity:.6;cursor:wait}
+.success-anim{text-align:center;padding:30px 10px}
+.success-anim .check{width:74px;height:74px;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:34px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;animation:pop .4s ease}
+.demo-note{background:var(--amber-soft);color:var(--amber-text);font-size:11.5px;font-weight:600;padding:9px 13px;border-radius:10px;margin-bottom:18px;line-height:1.45}
+
+/* ===== TOAST ===== */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:3000;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--accent);box-shadow:var(--shadow);border-radius:12px;padding:13px 18px;font-size:13px;font-weight:600;min-width:250px;animation:slidein .3s ease}
+.toast.err{border-left-color:var(--red)}
+.toast.ok{border-left-color:var(--green)}
+@keyframes slidein{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+
+/* ===== LOADER ===== */
+.loader-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:5000;transition:width .3s;width:0}
+.skeleton-note{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg);z-index:700;transition:opacity .4s}
+.spinner{width:38px;height:38px;border:3.5px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:1100px){
+  .detail-panel{position:absolute;right:0;top:0;bottom:0;box-shadow:-10px 0 40px rgba(0,0,0,.15)}
+  .stat-cards{grid-template-columns:repeat(2,1fr)}
+  .feature-grid,.pricing-grid{grid-template-columns:1fr}
+  .chart-grid{grid-template-columns:1fr}
+}
+@media(max-width:860px){
+  .sidebar{position:absolute;left:0;top:0;bottom:0;transform:translateX(-100%);transition:.25s}
+  .sidebar.open{transform:none}
+  .nav{display:none}
+}
+</style>
+<style id="visual-refresh">
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;500;600;700;800&family=Urbanist:wght@500;600;700;800&display=swap');
+
+:root{
+  --bg:#f3f5f1;
+  --panel:#ffffff;
+  --panel2:#f7f8f5;
+  --border:#dfe5e0;
+  --text:#18201d;
+  --text2:#758079;
+  --text3:#a3aea7;
+  --accent:#0e776b;
+  --accent2:#2a9d8f;
+  --accent-soft:#e1f1ec;
+  --accent-soft2:#eff8f5;
+  --signal:#c7f36b;
+  --green:#2c9a67;
+  --green-soft:#ddf3e8;
+  --green-text:#1f7a50;
+  --blue:#4285c5;
+  --blue-soft:#e4eef8;
+  --blue-text:#2e6296;
+  --red:#d85c52;
+  --red-soft:#fbe7e4;
+  --red-text:#a94039;
+  --amber:#c18a35;
+  --amber-soft:#f7eedc;
+  --amber-text:#89621f;
+  --shadow:0 12px 30px rgba(24,32,29,.08);
+  --shadow-sm:0 4px 14px rgba(24,32,29,.055);
+  --radius:16px;
+  --radius-lg:22px;
+  --font-sans:'Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-display:'Urbanist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --hero-map-border:#d7e4dd;
+  --hero-map-surface:#f8fbf8;
+  --hero-map-land:#eef4ef;
+  --hero-map-road:#d8e4dd;
+  --hero-map-route:#0e776b;
+  --hero-map-point:#c7f36b;
+  --hero-map-point-border:#ffffff;
+  --hero-map-muted:#8ea39a;
+  --hero-map-grid:rgba(14,119,107,.07);
+  --hero-map-halo:rgba(14,119,107,.08);
+  --hero-map-shadow:0 16px 40px rgba(24,32,29,.08);
+}
+html.dark{
+  --bg:#0a0a0a;
+  --panel:#141414;
+  --panel2:#1d1d1d;
+  --border:#383838;
+  --text:#f5f5f5;
+  --text2:#c4c4c4;
+  --text3:#8f8f8f;
+  --accent:#f2f2f2;
+  --accent2:#d8d8d8;
+  --accent-soft:#2a2a2a;
+  --accent-soft2:#222222;
+  --signal:#f2f2f2;
+  --green:#51d88a;
+  --green-soft:#173823;
+  --green-text:#86efac;
+  --blue:#6fa8e6;
+  --blue-soft:#172c46;
+  --blue-text:#93c5fd;
+  --red:#ef766e;
+  --red-soft:#411f23;
+  --red-text:#fca5a5;
+  --amber:#a8a8a8;
+  --amber-soft:#242424;
+  --amber-text:#e9e9e9;
+  --shadow:0 18px 42px rgba(0,0,0,.58);
+  --shadow-sm:0 5px 16px rgba(0,0,0,.42);
+  --hero-map-border:#383838;
+  --hero-map-surface:#1b1b1b;
+  --hero-map-land:#222222;
+  --hero-map-road:#393939;
+  --hero-map-route:#f2f2f2;
+  --hero-map-point:#d8d8d8;
+  --hero-map-point-border:#111111;
+  --hero-map-muted:#a3a3a3;
+  --hero-map-grid:rgba(255,255,255,.07);
+  --hero-map-halo:rgba(255,255,255,.09);
+  --hero-map-shadow:0 18px 42px rgba(0,0,0,.4);
+}
+
+html{background:var(--bg)}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);letter-spacing:-.005em}
+button,input,select{font-family:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid rgba(14,119,107,.25);outline-offset:2px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#c9d4cd;border:3px solid transparent;background-clip:padding-box;border-radius:999px}
+html.dark ::-webkit-scrollbar-thumb{background:#395147;border-color:transparent}
+
+.topbar{height:72px;min-height:72px;padding:0 28px;gap:16px;background:rgba(255,255,255,.92);border-bottom:1px solid var(--border);box-shadow:0 2px 16px rgba(24,32,29,.035);backdrop-filter:blur(12px)}
+html.dark .topbar{background:rgba(23,33,29,.92)}
+.logo{gap:11px;font-family:var(--font-display);font-size:16px;letter-spacing:-.35px}
+.logo-badge{width:36px;height:36px;border-radius:12px;background:var(--text);color:#fff;box-shadow:none;font-size:12px;letter-spacing:.03em}
+.logo small{font-family:var(--font-sans);font-size:10px;color:var(--text3);margin-top:2px}
+.nav{gap:3px;margin-left:22px}
+.nav button{padding:9px 12px;border-radius:9px;font-size:12px;font-weight:700;color:var(--text2)}
+.nav button:hover{background:var(--panel2);color:var(--text)}
+.nav button.active{background:var(--accent-soft);color:var(--accent)}
+.credits-chip{background:var(--accent-soft);border-color:transparent;color:var(--accent);padding:8px 13px;font-size:12px}
+.btn{padding:10px 15px;border-radius:10px;font-size:12.5px;letter-spacing:.005em}
+.btn-primary{background:var(--text);color:#fff;box-shadow:0 5px 12px rgba(24,32,29,.16)}
+.btn-primary:hover{background:var(--accent);box-shadow:0 7px 16px rgba(14,119,107,.2)}
+.btn-ghost{background:var(--panel);border-color:var(--border);color:var(--text2)}
+.btn-ghost:hover{color:var(--accent);border-color:var(--accent)}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--panel);border-color:var(--border);font-size:14px}
+.icon-btn:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+
+.page{padding:30px clamp(18px,4vw,52px) 54px;background:var(--bg)}
+.page-inner{max-width:1180px}
+.section-title{font-family:var(--font-display);font-size:19px;font-weight:700;letter-spacing:-.45px;margin-bottom:15px}
+.hero{min-height:348px;padding:46px 48px;border:1px solid var(--border);border-radius:var(--radius-lg);background-color:var(--panel);background-image:linear-gradient(90deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.96) 48%,rgba(255,255,255,.48) 100%),linear-gradient(0deg,transparent 24px,rgba(14,119,107,.045) 25px,transparent 26px),linear-gradient(90deg,transparent 24px,rgba(14,119,107,.045) 25px,transparent 26px);background-size:auto,25px 25px,25px 25px;box-shadow:var(--shadow-sm);margin-bottom:22px;display:flex;flex-direction:column;justify-content:center;position:relative}
+html.dark .hero{background-image:linear-gradient(90deg,rgba(23,33,29,.98) 0%,rgba(23,33,29,.96) 48%,rgba(23,33,29,.56) 100%),linear-gradient(0deg,transparent 24px,rgba(103,212,192,.07) 25px,transparent 26px),linear-gradient(90deg,transparent 24px,rgba(103,212,192,.07) 25px,transparent 26px)}
+.hero::after{right:-30px;top:30px;width:300px;height:300px;border:1px solid rgba(14,119,107,.16);background:radial-gradient(circle at 34% 36%,rgba(199,243,107,.55) 0 7px,transparent 8px),radial-gradient(circle at 68% 62%,rgba(14,119,107,.18) 0 6px,transparent 7px),transparent;box-shadow:inset 0 0 0 28px rgba(14,119,107,.025),inset 0 0 0 70px rgba(14,119,107,.025)}
+.hero::before{right:118px;bottom:-58px;width:178px;height:178px;border:1px dashed rgba(14,119,107,.18);background:transparent}
+.hero h1{position:relative;z-index:1;max-width:650px;color:var(--text);font-family:var(--font-display);font-size:clamp(31px,4.1vw,54px);font-weight:700;line-height:1.01;letter-spacing:-1.9px;margin-bottom:16px}
+.hero p{position:relative;z-index:1;max-width:590px;color:var(--text2);font-size:14px;line-height:1.65;margin-bottom:24px}
+.hero>div{position:relative;z-index:1}
+.hero>.hero-map-preview{position:absolute;z-index:0}
+.hero{isolation:isolate}
+.hero-map-preview{position:absolute;inset:0 0 0 auto;width:min(54%,620px);min-width:430px;z-index:0;pointer-events:none}
+.hero-map-preview::before{content:'';position:absolute;inset:0 auto 0 -1px;width:35%;z-index:2;background:linear-gradient(90deg,var(--panel) 0%,transparent 100%)}
+.hero-map-surface{position:absolute;inset:22px 24px 22px 0;overflow:hidden;border:1px solid var(--hero-map-border);border-radius:22px;background-color:var(--hero-map-surface);background-image:linear-gradient(0deg,transparent 24px,var(--hero-map-grid) 25px,transparent 26px),linear-gradient(90deg,transparent 24px,var(--hero-map-grid) 25px,transparent 26px);background-size:25px 25px,25px 25px;box-shadow:var(--hero-map-shadow);}
+.hero-map-surface::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 78% 22%,rgba(199,243,107,.13),transparent 26%),linear-gradient(145deg,transparent 35%,rgba(255,255,255,.22) 35.2%,transparent 35.6%);opacity:.75;pointer-events:none}
+.hero-map-summary{position:absolute;top:18px;right:18px;z-index:3;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding:10px 12px;border:1px solid var(--hero-map-border);border-radius:12px;background:rgba(255,255,255,.74);box-shadow:0 8px 20px rgba(24,32,29,.06);color:var(--text)}
+.hero-map-summary__eyebrow{font-size:9px;color:var(--hero-map-muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.hero-map-summary strong{font-family:var(--font-display);font-size:14px;letter-spacing:-.2px}
+.hero-map-summary__count{font-size:10px;color:var(--text2)}
+.hero-map-art{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible}
+.hero-map__districts path{fill:var(--hero-map-land);stroke:var(--hero-map-border);stroke-width:1.4;opacity:.9;vector-effect:non-scaling-stroke}
+.hero-map__roads path{fill:none;stroke:var(--hero-map-road);stroke-width:1.2;stroke-linecap:round;opacity:.9;vector-effect:non-scaling-stroke}
+.hero-map__route{fill:none;stroke:var(--hero-map-route);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:6 7;animation:heroMapRoute 12s linear infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));vector-effect:non-scaling-stroke}
+.hero-map__halos circle{fill:none;stroke:var(--hero-map-halo);stroke-width:1.5;stroke-dasharray:2 5;vector-effect:non-scaling-stroke}
+.hero-map__point{fill:var(--hero-map-point);stroke:var(--hero-map-point-border);stroke-width:2;vector-effect:non-scaling-stroke}
+.hero-map__point--active{fill:var(--hero-map-route);stroke-width:2.5}
+.hero-map__labels{fill:var(--hero-map-muted);font-family:var(--font-sans);font-size:10px;font-weight:800;letter-spacing:.12em}
+.hero-map-legend{position:absolute;left:18px;bottom:16px;z-index:3;display:flex;flex-wrap:wrap;gap:7px;padding:7px 9px;border:1px solid var(--hero-map-border);border-radius:999px;background:rgba(255,255,255,.74);box-shadow:0 8px 20px rgba(24,32,29,.06);color:var(--text2);font-size:9.5px;font-weight:700}
+.hero-map-legend span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.hero-map-legend__dot{width:7px;height:7px;border-radius:50%;background:var(--green);border:1px solid var(--hero-map-point-border)}
+.hero-map-legend__dot--review{background:var(--blue)}
+.hero-map-legend__dot--refused{background:var(--red)}
+@keyframes heroMapRoute{to{stroke-dashoffset:-120px}}
+.hero .btn-white{background:var(--text);color:#fff;box-shadow:0 7px 16px rgba(24,32,29,.16)}
+.hero .btn-white:hover{background:var(--accent)}
+.hero .btn-outline{background:rgba(255,255,255,.72);color:var(--text);border:1px solid var(--border)}
+.hero .btn-outline:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+html.dark .hero .btn-outline{background:rgba(23,33,29,.72)}
+
+.stat-cards{gap:12px;margin-bottom:30px}
+.stat-card{border:1px solid var(--border);border-radius:14px;padding:18px 19px;background:var(--panel);box-shadow:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.stat-card:hover{border-color:var(--border);box-shadow:none}
+.stat-card .sc-icon{width:34px;height:34px;border-radius:10px;font-size:16px;margin-bottom:15px}
+.stat-card .sc-value{font-family:var(--font-display);font-size:27px;font-weight:700;letter-spacing:-1px}
+.stat-card .sc-label{font-size:11.5px;color:var(--text2);font-weight:700;margin-top:4px}
+.feature-grid{grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:30px}
+.feature{border:1px solid var(--border);border-radius:14px;padding:19px;background:var(--panel);box-shadow:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.feature:hover{transform:translateY(-3px);border-color:rgba(14,119,107,.38);box-shadow:var(--shadow-sm)}
+.feature .f-icon{font-size:23px;margin-bottom:13px;filter:saturate(.8)}
+.feature h3{font-family:var(--font-display);font-size:15px;letter-spacing:-.2px;margin-bottom:7px}
+.feature p{font-size:12.5px;line-height:1.6}
+
+.pricing-grid{gap:12px;margin-bottom:25px}
+.price-card{border:1px solid var(--border);border-radius:16px;padding:24px;background:var(--panel);box-shadow:none}
+.price-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm)}
+.price-card.pop{border-color:var(--accent);box-shadow:0 10px 24px rgba(14,119,107,.12)}
+.price-card .pc-tag{background:var(--accent);color:#fff;box-shadow:none;font-size:10px;padding:4px 12px}
+.price-card h4{font-family:var(--font-display);font-size:13px;letter-spacing:.5px}
+.price-card .pc-credits{font-family:var(--font-display);font-size:30px}
+.price-card .pc-price{color:var(--accent)}
+.price-card li{font-size:12px}
+.price-card li::before{color:var(--accent)}
+
+.sidebar{width:316px;min-width:316px;background:var(--panel);border-right:1px solid var(--border)}
+.sidebar-scroll{padding:20px 17px}
+.search-box{margin-bottom:17px}
+.search-box input{padding:12px 38px 12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);font-size:12.5px}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search-box .s-icon{font-size:13px}
+.side-title{font-family:var(--font-display);font-size:13px;letter-spacing:-.1px}
+.recent-item{padding:10px 11px;border-color:var(--border);border-radius:11px;background:var(--panel2)}
+.recent-item:hover{border-color:var(--accent);box-shadow:none}
+.recent-item .r-name{font-size:11.5px}
+.recent-item .r-type{font-size:10.5px}
+.opt-row{font-size:12px;padding:7px 2px}
+.toggle{width:38px;height:21px}
+.toggle.on{background:var(--accent)}
+.filter-group{margin-bottom:12px}
+.filter-group label{font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--text3)}
+.filter-group select,.filter-group input{padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:var(--panel2);font-size:12px}
+hr.sep{border-color:var(--border);margin:15px 0}
+.legend{gap:6px}
+.legend span{font-size:10.5px;padding:5px 8px;background:var(--panel2);border-color:var(--border)}
+.sidebar-footer{padding:13px 17px;border-color:var(--border);font-size:12px}
+.sidebar-footer .cr{color:var(--accent)}
+.sidebar-footer .settings{font-size:11.5px}
+
+.map-wrap{background:#e8ebe7}
+#map{background:#e8ebe7}
+html.dark #map{background:#15211d}
+.map-topbox{top:18px;left:18px;padding:11px 14px;min-width:226px;border:1px solid rgba(255,255,255,.65);border-radius:12px;box-shadow:0 8px 24px rgba(24,32,29,.12)}
+.map-topbox .city{font-family:var(--font-display);font-size:14px}
+.map-topbox .sub{font-size:11px}
+.map-count{top:18px;padding:8px 14px;color:var(--accent);font-size:11.5px;border:1px solid rgba(255,255,255,.65)}
+.map-style-switch{bottom:20px;padding:4px;background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 24px rgba(24,32,29,.14)}
+.map-style-switch button{padding:7px 14px;font-size:11.5px}
+.map-style-switch button.active{background:var(--text);color:#fff}
+.leaflet-control-zoom a{color:var(--text)!important;background:var(--panel)!important;border-color:var(--border)!important}
+.leaflet-bar{border:1px solid var(--border)!important;box-shadow:var(--shadow-sm)!important}
+.pmarker{border-width:2px;box-shadow:0 2px 7px rgba(24,32,29,.35)}
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(14,119,107,.18)!important}
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:var(--accent)!important}
+.leaflet-popup-content-wrapper{border:1px solid var(--border);border-radius:12px}
+.leaflet-popup-content{margin:13px 15px;min-width:220px}
+.pop-ref{color:var(--accent);background:var(--accent-soft2);border-color:var(--accent-soft);font-size:10.5px}
+.pop-title{font-family:var(--font-display);font-size:13px}
+.pop-addr,.pop-obj{font-size:11.5px}
+.pop-link{color:var(--accent);font-size:11.5px}
+
+.badge{padding:4px 9px;font-size:10.5px;letter-spacing:.01em}
+.badge.acc{background:var(--green-soft);color:var(--green-text)}
+.badge.enc{background:var(--blue-soft);color:var(--blue-text)}
+.badge.ref{background:var(--red-soft);color:var(--red-text)}
+.detail-panel{width:376px;min-width:376px;background:var(--panel);border-left-color:var(--border)}
+.detail-head{padding:15px 17px 0}
+.detail-scroll{padding:0 17px 19px}
+.dp-card{border-color:var(--border);border-radius:15px;padding:18px;background:var(--panel2);box-shadow:none}
+.dp-ref{font-size:11px;padding:5px 9px;border-radius:7px}
+.dp-title{font-family:var(--font-display);font-size:19px;color:var(--accent)}
+.dp-addr{font-size:12px}
+.dp-tabs{gap:17px}
+.dp-tabs button{font-size:12.5px}
+.dp-tabs button.active{color:var(--accent);border-color:var(--accent)}
+.dp-field .f-label{font-size:11.5px;color:var(--accent)}
+.dp-field .f-value{font-size:12.5px}
+.dp-lockbox{background:var(--accent-soft2);border-color:var(--accent);border-radius:12px}
+.info-cell{border-color:var(--border);border-radius:11px;padding:12px;background:var(--panel)}
+.info-cell .ic-value{font-family:var(--font-display);font-size:16px}
+
+.search-controls{gap:9px;margin-bottom:16px}
+.search-controls .search-box{min-width:250px}
+.search-controls select{padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);font-size:12px}
+.result-list{gap:8px}
+.result-card{border-color:var(--border);border-radius:12px;padding:14px 16px;gap:14px;background:var(--panel);box-shadow:none}
+.result-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.result-card .rc-title{font-family:var(--font-display);font-size:13px}
+.result-card .rc-addr{font-size:12px}
+.result-card .rc-date{font-size:11px}
+.pagination button{border-color:var(--border);border-radius:8px;background:var(--panel);font-size:12px}
+.pagination button.active{background:var(--text);border-color:var(--text)}
+
+.chart-grid{gap:12px;margin-bottom:18px}
+.chart-card{border:1px solid var(--border);border-radius:15px;padding:19px;background:var(--panel);box-shadow:none}
+.chart-card h3{font-family:var(--font-display);font-size:14px;margin-bottom:15px}
+.chart-box{height:245px}
+.faq-item{border-color:var(--border);border-radius:12px;background:var(--panel);margin-bottom:8px}
+.faq-item summary{padding:15px 17px;font-family:var(--font-display);font-size:13px}
+.faq-item summary::after{font-size:17px;color:var(--accent)}
+.faq-item .faq-body{padding:0 17px 16px;font-size:12.5px}
+
+.admin-side{width:220px;min-width:220px;background:var(--panel);border-right-color:var(--border)}
+.admin-side button{font-size:12.5px;border-radius:9px}
+.admin-side button.active{background:var(--accent-soft);color:var(--accent)}
+.admin-content{padding:26px 30px}
+.admin-table{border:1px solid var(--border);box-shadow:none;border-radius:12px}
+.admin-table th{background:var(--panel2);border-color:var(--border);font-size:10.5px}
+.admin-table td{border-color:var(--border);font-size:12px}
+.login-box{border-color:var(--border);border-radius:17px;box-shadow:var(--shadow-sm)}
+.login-box h2{font-family:var(--font-display)}
+.login-box input{border-color:var(--border);background:var(--panel2)}
+
+.modal-overlay{background:rgba(15,24,20,.46);backdrop-filter:blur(7px)}
+.modal{border:1px solid var(--border);border-radius:18px;padding:28px;box-shadow:0 30px 80px rgba(24,32,29,.22)}
+.modal h2{font-family:var(--font-display)}
+.stripe-head{border-color:var(--border);background:var(--panel2);border-radius:12px}
+.stripe-field input{border-color:var(--border)}
+.stripe-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.stripe-pay{background:var(--text);border-radius:10px}
+.stripe-pay:hover{background:var(--accent)}
+.demo-note{background:var(--amber-soft);color:var(--amber-text)}
+.toast{border-color:var(--border);border-left-color:var(--accent);border-radius:11px;box-shadow:var(--shadow);background:var(--panel);font-size:12px}
+.loader-bar{height:3px;background:linear-gradient(90deg,var(--accent),var(--signal))}
+.skeleton-note{background:var(--bg)}
+.spinner{border-color:var(--accent-soft);border-top-color:var(--accent)}
+
+@media(max-width:1100px){
+  .topbar{padding:0 20px}
+  .hero{padding:40px 38px}
+  .detail-panel{box-shadow:-12px 0 34px rgba(24,32,29,.16)}
+}
+@media(max-width:980px){
+  .nav{display:none}
+  .topbar .spacer{min-width:12px}
+  .hero h1{font-size:clamp(30px,6vw,48px)}
+}
+@media(max-width:860px){
+  .page{padding:22px 16px 38px}
+  .sidebar{position:absolute;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .25s ease;box-shadow:14px 0 36px rgba(24,32,29,.12)}
+  .sidebar.open{transform:none}
+  .feature-grid,.pricing-grid{grid-template-columns:1fr 1fr}
+  .detail-panel{width:min(376px,92vw);min-width:min(376px,92vw)}
+}
+@media(max-width:620px){
+  .topbar{height:64px;min-height:64px;padding:0 14px;gap:8px}
+  .logo{font-size:14px}
+  .logo small,.credits-chip{display:none}
+  .topbar .btn-primary{padding:9px 11px;font-size:11.5px}
+  .hero{min-height:390px;padding:30px 24px;border-radius:17px}
+  .hero h1{font-size:35px;letter-spacing:-1.3px}
+  .hero p{font-size:13px}
+  .stat-cards,.feature-grid,.pricing-grid{grid-template-columns:1fr}
+  .stat-card{padding:16px}
+  .map-topbox{top:12px;left:12px;min-width:0;max-width:calc(100% - 24px)}
+  .map-count{top:74px;left:12px;transform:none}
+  .map-style-switch{bottom:14px}
+  .detail-panel{top:0}
+  .result-card{align-items:flex-start;flex-wrap:wrap}
+  .result-card .rc-date{width:100%;padding-left:25px}
+  .search-controls .search-box{min-width:100%}
+  .search-controls select{flex:1;min-width:0}
+  .admin-content{padding:20px 16px;overflow-x:auto}
+  .admin-table{min-width:690px}
+  .modal{padding:24px 18px;border-radius:16px}
+  .toast-wrap{right:14px;bottom:14px;left:14px}
+  .toast{min-width:0}
+}
+@media(max-width:980px){
+  .hero-map-preview{width:51%;min-width:360px;opacity:.9}
+  .hero h1,.hero p{max-width:55%}
+}
+@media(max-width:620px){
+  .hero{padding-bottom:175px}
+  .hero h1,.hero p{max-width:100%}
+  .hero-map-preview{inset:auto 0 0;width:100%;min-width:0;height:178px;opacity:.82}
+  .hero-map-preview::before{inset:0 0 auto;width:100%;height:62%;background:linear-gradient(180deg,var(--panel) 0%,transparent 100%)}
+  .hero-map-surface{inset:20px 12px 0;border-radius:17px 17px 0 0}
+  .hero-map-summary{display:none}
+  .hero-map-legend{left:12px;right:12px;bottom:11px;justify-content:flex-start;border-radius:12px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-map__route{animation:none}
+}
+</style>
+<style id="icon-refresh">
+.lucide{width:1em;height:1em;stroke-width:2;vertical-align:-.16em;flex:none}
+.btn .lucide{width:15px;height:15px}
+.btn .lucide + .lucide{margin-left:-3px}
+.icon-btn .lucide{width:16px;height:16px;vertical-align:0}
+.credits-chip .lucide{width:15px;height:15px}
+.logo-badge .lucide{width:18px;height:18px;stroke-width:2.2}
+.sc-icon .lucide{width:18px;height:18px}
+.f-icon .lucide{width:24px;height:24px;stroke-width:1.8}
+.s-icon .lucide{width:15px;height:15px;vertical-align:0}
+.map-topbox .lucide{width:18px;height:18px}
+.map-topbox>div:first-child{color:var(--accent)}
+.map-style-switch .lucide{width:14px;height:14px}
+.pop-addr .lucide,.dp-addr .lucide,.rc-addr .lucide{width:13px;height:13px;vertical-align:-.18em}
+.dp-field .f-label .lucide{width:14px;height:14px;vertical-align:-.18em}
+.badge .lucide{width:12px;height:12px;vertical-align:-.16em}
+.fav-btn.faved .lucide{fill:currentColor}
+.lk-icon .lucide{width:24px;height:24px}
+.dp-actions .lucide{width:14px;height:14px}
+.stripe-badge .lucide{width:13px;height:13px}
+.feature,.stat-card,.price-card{transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s ease,border-color .2s ease}
+.feature:active,.price-card:active,.btn:active,.icon-btn:active{transform:translateY(1px) scale(.99)}
+.stat-card{transition:border-color .2s ease,box-shadow .2s ease}
+.stat-card:hover{transform:none;border-color:var(--border);box-shadow:none}
+.feature .f-icon{color:var(--accent);width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft)}
+.sc-icon{display:flex!important}
+@media(max-width:620px){.btn .lucide{width:14px;height:14px}.f-icon .lucide{width:21px;height:21px}}
+</style>
+<style id="dark-monochrome">
+html.dark{color-scheme:dark}
+html.dark body{background:#0a0a0a;color:#f5f5f5}
+html.dark .topbar{background:rgba(20,20,20,.94);border-color:#383838}
+html.dark .logo-badge{background:#f2f2f2;color:#141414}
+html.dark .logo-badge .lucide{color:#000;stroke:currentColor}
+html.dark button:focus-visible,html.dark input:focus-visible,html.dark select:focus-visible,html.dark summary:focus-visible{outline-color:rgba(255,255,255,.58)}
+html.dark ::-webkit-scrollbar-thumb{background:#555;border-color:#0a0a0a}
+html.dark .btn-primary,html.dark .hero .btn-white,html.dark .map-style-switch button.active,html.dark .pagination button.active,html.dark .stripe-pay{background:#f2f2f2;color:rgb(20,20,20);border-color:#f2f2f2}
+html.dark .btn-primary:hover,html.dark .hero .btn-white:hover,html.dark .stripe-pay:hover{background:#fff;color:#000;border-color:#fff;box-shadow:0 7px 16px rgba(255,255,255,.12)}
+html.dark .hero .btn-outline{background:#1b1b1b;color:#f5f5f5;border-color:#555}
+html.dark .hero .btn-outline:hover{background:#2a2a2a;color:#fff;border-color:#aaa}
+html.dark .hero{background-color:#141414;background-image:linear-gradient(90deg,rgba(20,20,20,.98) 0%,rgba(20,20,20,.96) 48%,rgba(20,20,20,.62) 100%),linear-gradient(0deg,transparent 24px,rgba(255,255,255,.06) 25px,transparent 26px),linear-gradient(90deg,transparent 24px,rgba(255,255,255,.06) 25px,transparent 26px)}
+html.dark .hero::after{border-color:#444;background:radial-gradient(circle at 34% 36%,rgba(255,255,255,.28) 0 7px,transparent 8px),radial-gradient(circle at 68% 62%,rgba(255,255,255,.1) 0 6px,transparent 7px),transparent;box-shadow:inset 0 0 0 28px rgba(255,255,255,.025),inset 0 0 0 70px rgba(255,255,255,.025)}
+html.dark .hero::before{border-color:#444}
+html.dark .price-card.pop{border-color:#f2f2f2;box-shadow:0 10px 24px rgba(255,255,255,.08)}
+html.dark .price-card .pc-tag{background:#f2f2f2;color:#141414}
+html.dark .map-style-switch{background:rgba(20,20,20,.96);border-color:#383838}
+html.dark .map-topbox,html.dark .map-count{border-color:#383838}
+html.dark #map,html.dark .map-wrap{background:#111}
+html.dark .pmarker{border-color:#f2f2f2}
+html.dark .marker-cluster-small,html.dark .marker-cluster-medium,html.dark .marker-cluster-large{background:rgba(255,255,255,.12)!important}
+html.dark .marker-cluster-small div,html.dark .marker-cluster-medium div,html.dark .marker-cluster-large div{background:#dedede!important;color:#111!important}
+html.dark .badge.acc{background:var(--green-soft);color:var(--green-text)}
+html.dark .badge.enc{background:var(--blue-soft);color:var(--blue-text)}
+html.dark .badge.ref{background:var(--red-soft);color:var(--red-text)}
+html.dark .dp-lockbox{background:#202020;border-color:#bdbdbd}
+html.dark .feature:hover{border-color:#888}
+html.dark .toggle.on{background:#f2f2f2}
+html.dark .toggle.on::after{background:#141414}
+html.dark .hero-map-summary,html.dark .hero-map-legend{background:rgba(20,20,20,.88);color:#c4c4c4;box-shadow:0 10px 24px rgba(0,0,0,.28)}
+html.dark .hero-map-surface::after{background:radial-gradient(circle at 78% 22%,rgba(255,255,255,.08),transparent 26%),linear-gradient(145deg,transparent 35%,rgba(255,255,255,.08) 35.2%,transparent 35.6%)}
+html.dark .modal-overlay{background:rgba(0,0,0,.72)}
+</style>
+</head>
+<body>
+
+<div class="loader-bar" id="loaderBar"></div>
+
+<!-- ===== TOP BAR ===== -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-badge" aria-hidden="true"><i data-lucide="map-pinned"></i></div>
+    <div>CartoPermis IDF<small>Permis de construire en Île-de-France</small></div>
+  </div>
+  <nav class="nav" id="mainNav">
+    <button data-view="home" class="active">Accueil</button>
+    <button data-view="map">Carte interactive</button>
+    <button data-view="search">Recherche avancée</button>
+    <button data-view="stats">Données &amp; Rapports</button>
+    <button data-view="faq">Contact &amp; FAQ</button>
+    <button data-view="admin">Administration</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="credits-chip" onclick="openCreditsModal()">
+    <i data-lucide="coins" aria-hidden="true"></i><span id="creditsTop">—</span> crédits
+  </button>
+  <button class="icon-btn" id="themeBtn" title="Mode sombre" aria-label="Activer le mode sombre" onclick="toggleTheme()"><i data-lucide="moon" aria-hidden="true"></i></button>
+  <button class="btn btn-primary" onclick="openCreditsModal()"><i data-lucide="zap" aria-hidden="true"></i> Recharger</button>
+</header>
+
+<div class="main">
+
+<!-- ===================== VUE ACCUEIL ===================== -->
+<section class="view active" id="view-home">
+  <div class="page"><div class="page-inner">
+    <div class="hero">
+      <h1>Visualisez et explorez les permis de construire en Île-de-France</h1>
+      <p>CartoPermis IDF réunit les dossiers d'urbanisme récents — permis de construire, déclarations préalables, permis de démolir et d'aménager — sur une cartographie interactive pensée pour les citoyens, urbanistes, promoteurs et collectivités.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-white" onclick="showView('map')"><i data-lucide="map" aria-hidden="true"></i> Explorer la carte</button>
+        <button class="btn btn-outline" onclick="showView('search')"><i data-lucide="search" aria-hidden="true"></i> Recherche avancée</button>
+      </div>
+      <div class="hero-map-preview" aria-hidden="true">
+        <div class="hero-map-surface">
+          <div class="hero-map-summary">
+            <span class="hero-map-summary__eyebrow">Dossiers actifs</span>
+            <strong>Île-de-France</strong>
+            <span class="hero-map-summary__count">8 157 permis suivis</span>
+          </div>
+          <svg class="hero-map-art" viewBox="0 0 520 320" role="presentation">
+            <g class="hero-map__districts">
+              <path d="M92 54C128 25 180 27 204 62c29 42 15 75 46 97 28 21 35 62 6 101-34 45-102 31-132-3-32-37-16-72-41-106C54 111 57 76 92 54Z"></path>
+              <path d="M280 24c54-12 111 12 128 54 18 45-11 74 20 110 33 38 14 84-28 106-52 27-119-2-126-54-6-42 28-63 17-104-10-38-42-99-11-112Z"></path>
+              <path d="M222 171c37-26 77-22 106 6 31 31 23 78-8 99-29 20-75 10-94-21-20-31-29-59-4-84Z"></path>
+            </g>
+            <g class="hero-map__roads">
+              <path d="M42 247C126 215 150 167 204 142S306 90 472 66"></path>
+              <path d="M62 62c75 40 104 66 164 99s130 81 233 115"></path>
+              <path d="M126 284c55-50 93-87 133-137S351 78 448 42"></path>
+              <path d="M34 154c74 14 126 18 178 2s96-53 151-54 93 24 132 64"></path>
+              <path d="M177 18c26 43 44 76 47 123s-16 92-58 158"></path>
+            </g>
+            <path class="hero-map__route" d="M132 245c32-21 34-65 69-85s52-29 86-62 70-24 112-56"></path>
+            <g class="hero-map__halos">
+              <circle cx="287" cy="98" r="17"></circle>
+              <circle cx="202" cy="160" r="12"></circle>
+            </g>
+            <g class="hero-map__points">
+              <circle class="hero-map__point hero-map__point--active" cx="287" cy="98" r="6"></circle>
+              <circle class="hero-map__point" cx="202" cy="160" r="5"></circle>
+              <circle class="hero-map__point" cx="132" cy="245" r="5"></circle>
+              <circle class="hero-map__point" cx="399" cy="42" r="5"></circle>
+              <circle class="hero-map__point" cx="362" cy="230" r="5"></circle>
+            </g>
+            <g class="hero-map__labels">
+              <text x="270" y="80">PARIS</text>
+              <text x="164" y="148">NANTERRE</text>
+              <text x="307" y="126">SAINT-DENIS</text>
+              <text x="373" y="252">MELUN</text>
+              <text x="389" y="31">CERGY</text>
+            </g>
+          </svg>
+          <div class="hero-map-legend">
+            <span><i class="hero-map-legend__dot hero-map-legend__dot--approved"></i>Accordé</span>
+            <span><i class="hero-map-legend__dot hero-map-legend__dot--review"></i>En instruction</span>
+            <span><i class="hero-map-legend__dot hero-map-legend__dot--refused"></i>Refusé</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-cards" id="homeStats">
+      <div class="stat-card"><div class="sc-icon" style="background:var(--accent-soft);color:var(--accent)"><i data-lucide="clipboard-list" aria-hidden="true"></i></div><div class="sc-value" id="hsTotal">—</div><div class="sc-label">Dossiers d'urbanisme</div></div>
+      <div class="stat-card"><div class="sc-icon" style="background:var(--green-soft);color:var(--green-text)"><i data-lucide="circle-check" aria-hidden="true"></i></div><div class="sc-value" id="hsAcc">—</div><div class="sc-label">Permis accordés</div></div>
+      <div class="stat-card"><div class="sc-icon" style="background:var(--blue-soft);color:var(--blue-text)"><i data-lucide="clock-3" aria-hidden="true"></i></div><div class="sc-value" id="hsEnc">—</div><div class="sc-label">En cours d'instruction</div></div>
+      <div class="stat-card"><div class="sc-icon" style="background:var(--red-soft);color:var(--red-text)"><i data-lucide="circle-x" aria-hidden="true"></i></div><div class="sc-value" id="hsRef">—</div><div class="sc-label">Dossiers refusés</div></div>
+    </div>
+
+    <div class="section-title">Tout ce qu'il faut pour analyser l'urbanisme francilien</div>
+    <div class="feature-grid">
+      <div class="feature" onclick="showView('map')"><div class="f-icon"><i data-lucide="map" aria-hidden="true"></i></div><h3>Cartographie interactive</h3><p>Carte dynamique avec clustering, vues plan et satellite, filtres par statut, type de dossier, arrondissement et période.</p></div>
+      <div class="feature" onclick="showView('search')"><div class="f-icon"><i data-lucide="search" aria-hidden="true"></i></div><h3>Annuaire &amp; recherche</h3><p>Moteur de recherche performant par adresse, référence, demandeur ou objet des travaux, avec tri et pagination.</p></div>
+      <div class="feature" onclick="showView('stats')"><div class="f-icon"><i data-lucide="bar-chart-3" aria-hidden="true"></i></div><h3>Statistiques &amp; tendances</h3><p>Tableaux de bord sur l'évolution des dépôts, la répartition par commune et les taux de décision favorables.</p></div>
+      <div class="feature"><div class="f-icon"><i data-lucide="star" aria-hidden="true"></i></div><h3>Favoris &amp; suivi</h3><p>Enregistrez vos permis dans vos sélections pour les retrouver instantanément et suivre leur instruction.</p></div>
+      <div class="feature"><div class="f-icon"><i data-lucide="coins" aria-hidden="true"></i></div><h3>Crédits à la demande</h3><p>Consultez les fiches détaillées grâce à un système de crédits flexible, sans abonnement imposé — paiement sécurisé Stripe.</p></div>
+      <div class="feature"><div class="f-icon"><i data-lucide="moon" aria-hidden="true"></i></div><h3>Mode sombre</h3><p>Interface claire ou sombre pour un confort visuel optimal, de jour comme de nuit.</p></div>
+    </div>
+
+    <div class="section-title">Des formules adaptées à chaque usage</div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h4>DÉCOUVERTE</h4>
+        <div class="pc-credits">100 <small>crédits</small></div>
+        <div class="pc-price">9 €</div>
+        <div class="pc-unit">0,09 € / fiche détaillée</div>
+        <ul><li>100 fiches détaillées</li><li>Carte &amp; filtres illimités</li><li>Favoris illimités</li></ul>
+        <button class="btn btn-ghost" style="width:100%" onclick="openCheckout('decouverte')">Choisir</button>
+      </div>
+      <div class="price-card pop">
+        <div class="pc-tag">LE PLUS POPULAIRE</div>
+        <h4>PRO</h4>
+        <div class="pc-credits">500 <small>crédits</small></div>
+        <div class="pc-price">39 €</div>
+        <div class="pc-unit">0,078 € / fiche détaillée</div>
+        <ul><li>500 fiches détaillées</li><li>Export des résultats</li><li>Statistiques avancées</li><li>Support prioritaire</li></ul>
+        <button class="btn btn-primary" style="width:100%" onclick="openCheckout('pro')">Choisir</button>
+      </div>
+      <div class="price-card">
+        <h4>COLLECTIVITÉ</h4>
+        <div class="pc-credits">2000 <small>crédits</small></div>
+        <div class="pc-price">129 €</div>
+        <div class="pc-unit">0,064 € / fiche détaillée</div>
+        <ul><li>2000 fiches détaillées</li><li>Multi-utilisateurs</li><li>Rapports personnalisés</li><li>API dédiée</li></ul>
+        <button class="btn btn-ghost" style="width:100%" onclick="openCheckout('collectivite')">Choisir</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:30px">💳 Paiement sécurisé par Stripe · Crédits sans date d'expiration · Facture disponible</p>
+  </div></div>
+</section>
+
+<!-- ===================== VUE CARTE ===================== -->
+<section class="view" id="view-map">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-scroll">
+      <div class="search-box">
+        <input type="text" id="mapSearch" placeholder="Rechercher un permis, une adresse...">
+        <span class="s-icon" aria-hidden="true"><i data-lucide="search"></i></span>
+      </div>
+
+      <div class="side-title">Sélections récentes <span class="count" id="favCount"></span></div>
+      <div id="favList"></div>
+
+      <hr class="sep">
+      <div class="side-title">Options d'affichage</div>
+      <div class="opt-row"><span>Vue satellite</span><div class="toggle" id="tglSat" onclick="toggleSatellite()"></div></div>
+      <div class="opt-row"><span>Regroupement (clusters)</span><div class="toggle on" id="tglCluster" onclick="toggleCluster()"></div></div>
+      <div class="opt-row"><span>Afficher les étiquettes</span><div class="toggle on" id="tglLabels" onclick="toggleLabels()"></div></div>
+
+      <hr class="sep">
+      <div class="side-title">Filtres <button style="font-size:11.5px;color:var(--accent);font-weight:700" onclick="resetFilters()">Réinitialiser</button></div>
+      <div class="filter-group"><label>Statut</label>
+        <select id="fEtat" onchange="applyFilters()">
+          <option value="">Tous les statuts</option>
+          <option>Accordé</option><option>En cours d'instruction</option><option>Refusé</option>
+        </select></div>
+      <div class="filter-group"><label>Type de dossier</label>
+        <select id="fType" onchange="applyFilters()">
+          <option value="">Tous les types</option>
+          <option>Permis de construire</option><option>Déclarations préalables</option>
+          <option>Permis de démolir</option><option>Permis d'aménager</option>
+        </select></div>
+      <div class="filter-group"><label>Circonscription</label>
+        <select id="fCirc" onchange="applyFilters()">
+          <option value="">Toutes</option><option>NORD</option><option>SUD</option><option>EST</option><option>OUEST</option>
+        </select></div>
+      <div class="filter-group"><label>Arrondissement</label>
+        <select id="fCommune" onchange="applyFilters()"><option value="">Tous les arrondissements</option></select></div>
+      <div class="filter-group"><label>Type de décision</label>
+        <select id="fDecision" onchange="applyFilters()">
+          <option value="">Toutes les décisions</option>
+          <option>Favorable</option><option value="FavorableRéservé">Favorable avec réserves</option>
+          <option value="FavorableTacite">Favorable tacite</option><option value="Défavorable">Défavorable</option>
+        </select></div>
+      <div class="filter-group"><label>Période de dépôt</label>
+        <div class="dual">
+          <input type="date" id="fDateMin" onchange="applyFilters()">
+          <input type="date" id="fDateMax" onchange="applyFilters()">
+        </div></div>
+
+      <div class="legend">
+        <span><span class="dot" style="background:var(--green)"></span>Accordé</span>
+        <span><span class="dot" style="background:var(--blue)"></span>En instruction</span>
+        <span><span class="dot" style="background:var(--red)"></span>Refusé</span>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <span class="cr"><i data-lucide="coins" aria-hidden="true"></i> Crédits : <span id="creditsSide">—</span></span>
+      <button class="settings" onclick="openCreditsModal()"><i data-lucide="settings-2" aria-hidden="true"></i> Recharger</button>
+    </div>
+  </aside>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="skeleton-note" id="mapLoader"><div class="spinner" id="mapSpinner"></div><div style="font-size:13px;color:var(--text2);font-weight:600;text-align:center;line-height:1.6;max-width:420px;padding:0 20px" id="mapLoaderMsg">Chargement des dossiers d'urbanisme…</div></div>
+    <div class="map-topbox">
+      <div style="width:36px;height:36px;border-radius:11px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center"><i data-lucide="map-pin" aria-hidden="true"></i></div>
+      <div><div class="city">Paris · Île-de-France</div><div class="sub">Dossiers récents d'urbanisme</div></div>
+    </div>
+    <div class="map-count" id="mapCount">— dossiers affichés</div>
+    <div class="map-style-switch">
+      <button id="msPlan" class="active" onclick="setBase('plan')">Plan</button>
+      <button id="msSat" onclick="setBase('sat')">Satellite</button>
+    </div>
+  </div>
+
+  <!-- Panneau détail -->
+  <aside class="detail-panel" id="detailPanel">
+    <div class="detail-head"><button class="icon-btn" aria-label="Fermer le détail" title="Fermer le détail" onclick="closeDetail()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+    <div class="detail-scroll" id="detailContent"></div>
+  </aside>
+</section>
+
+<!-- ===================== VUE RECHERCHE ===================== -->
+<section class="view" id="view-search">
+  <div class="page"><div class="page-inner">
+    <div class="section-title" style="font-size:23px">Recherche avancée</div>
+    <p style="font-size:13.5px;color:var(--text2);margin-bottom:20px">Annuaire complet des dossiers d'urbanisme. Recherchez par adresse, référence, demandeur ou objet des travaux.</p>
+    <div class="search-controls">
+      <div class="search-box"><input type="text" id="dirSearch" placeholder="Ex : rue de Rivoli, DP 075 118, ravalement, SCI…"><span class="s-icon">🔍</span></div>
+      <select id="dirEtat"><option value="">Tous les statuts</option><option>Accordé</option><option>En cours d'instruction</option><option>Refusé</option></select>
+      <select id="dirType"><option value="">Tous les types</option><option>Permis de construire</option><option>Déclarations préalables</option><option>Permis de démolir</option><option>Permis d'aménager</option></select>
+      <select id="dirSort"><option value="date_desc">Plus récents</option><option value="date_asc">Plus anciens</option><option value="commune">Par arrondissement</option></select>
+    </div>
+    <div style="font-size:12.5px;color:var(--text3);font-weight:600;margin-bottom:12px" id="dirCount"></div>
+    <div class="result-list" id="dirResults"></div>
+    <div class="pagination" id="dirPagination"></div>
+  </div></div>
+</section>
+
+<!-- ===================== VUE DONNÉES & RAPPORTS ===================== -->
+<section class="view" id="view-stats">
+  <div class="page"><div class="page-inner">
+    <div class="section-title" style="font-size:23px">Données &amp; Rapports</div>
+    <p style="font-size:13.5px;color:var(--text2);margin-bottom:22px">Statistiques globales et tendances d'urbanisme calculées en temps réel sur l'ensemble des dossiers chargés.</p>
+    <div class="stat-cards">
+      <div class="stat-card"><div class="sc-icon" style="background:var(--accent-soft);color:var(--accent)">📋</div><div class="sc-value" id="stTotal">—</div><div class="sc-label">Dossiers analysés</div></div>
+      <div class="stat-card"><div class="sc-icon" style="background:var(--green-soft);color:var(--green-text)">📈</div><div class="sc-value" id="stTaux">—</div><div class="sc-label">Taux d'accord</div></div>
+      <div class="stat-card"><div class="sc-icon" style="background:var(--blue-soft);color:var(--blue-text)">🏗️</div><div class="sc-value" id="stPC">—</div><div class="sc-label">Permis de construire</div></div>
+      <div class="stat-card"><div class="sc-icon" style="background:var(--amber-soft);color:var(--amber-text)">🏘️</div><div class="sc-value" id="stTopArr">—</div><div class="sc-label">Arr. le plus actif</div></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card wide"><h3>📅 Évolution mensuelle des dépôts de dossiers</h3><div class="chart-box"><canvas id="chMonths"></canvas></div></div>
+      <div class="chart-card"><h3>🗂️ Répartition par type de dossier</h3><div class="chart-box"><canvas id="chTypes"></canvas></div></div>
+      <div class="chart-card"><h3>⚖️ Répartition des décisions</h3><div class="chart-box"><canvas id="chDecisions"></canvas></div></div>
+      <div class="chart-card wide"><h3>🏙️ Dossiers par arrondissement</h3><div class="chart-box"><canvas id="chCommunes"></canvas></div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ===================== VUE FAQ ===================== -->
+<section class="view" id="view-faq">
+  <div class="page"><div class="page-inner" style="max-width:780px">
+    <div class="section-title" style="font-size:23px">Contact &amp; FAQ</div>
+    <p style="font-size:13.5px;color:var(--text2);margin-bottom:22px">Tout ce qu'il faut savoir sur CartoPermis IDF, les données et le système de crédits.</p>
+    <details class="faq-item" open><summary>D'où proviennent les données ?</summary><div class="faq-body">Les dossiers proviennent du jeu de données public « Dossiers récents d'urbanisme » publié par la Ville de Paris sur Paris Data (opendatasoft). Ils couvrent les permis de construire, déclarations préalables, permis de démolir et permis d'aménager, et sont rechargés à chaque ouverture de l'application.</div></details>
+    <details class="faq-item"><summary>Comment fonctionne le système de crédits ?</summary><div class="faq-body">La navigation sur la carte, les filtres et la recherche sont gratuits et illimités. La consultation d'une <b>fiche détaillée</b> (demandeur, objet complet, programme, historique de décision) consomme <b>1 crédit</b>. Une fiche débloquée le reste définitivement, sans nouveau débit. Chaque nouveau compte reçoit 20 crédits offerts.</div></details>
+    <details class="faq-item"><summary>Le paiement est-il sécurisé ?</summary><div class="faq-body">Oui. Les paiements sont traités par <b>Stripe</b>, leader mondial du paiement en ligne, certifié PCI-DSS niveau 1. Aucune donnée bancaire ne transite par nos serveurs. Dans cette version de démonstration, le paiement est simulé.</div></details>
+    <details class="faq-item"><summary>À quelle fréquence les données sont-elles mises à jour ?</summary><div class="faq-body">Le jeu de données source est actualisé quotidiennement par la Ville de Paris. CartoPermis IDF interroge l'API en direct : vous consultez toujours la dernière version publiée.</div></details>
+    <details class="faq-item"><summary>Puis-je exporter les résultats ?</summary><div class="faq-body">L'export CSV des résultats de recherche est inclus dans les formules Pro et Collectivité. Les rapports personnalisés (PDF) sont disponibles pour les collectivités.</div></details>
+    <details class="faq-item"><summary>Couvrez-vous toute l'Île-de-France ?</summary><div class="faq-body">La version actuelle couvre Paris intra-muros (75). L'extension aux départements de la petite et grande couronne est prévue au fur et à mesure de la publication des données ouvertes par les collectivités concernées.</div></details>
+    <div class="chart-card" style="margin-top:24px"><h3>✉️ Nous contacter</h3>
+      <p style="font-size:13.5px;color:var(--text2);line-height:1.7">Une question, un besoin spécifique (API, licence collectivité, données sur mesure) ?<br>
+      📧 <b>contact@cartopermis-idf.fr</b> · 📞 01 84 80 00 00<br>
+      🏢 CartoPermis IDF · 18 rue Hermel, 75018 Paris</p></div>
+  </div></div>
+</section>
+
+<!-- ===================== VUE ADMIN ===================== -->
+<section class="view" id="view-admin"></section>
+
+</div><!-- /main -->
+
+<!-- ===== MODAL CRÉDITS / PRICING ===== -->
+<div class="modal-overlay" id="creditsModal">
+  <div class="modal">
+    <button class="icon-btn m-close" onclick="closeModal('creditsModal')">✕</button>
+    <h2>🪙 Recharger vos crédits</h2>
+    <div class="m-sub">1 crédit = 1 fiche détaillée. La carte, les filtres et la recherche restent gratuits et illimités.</div>
+    <div class="pricing-grid" style="margin-bottom:8px">
+      <div class="price-card"><h4>DÉCOUVERTE</h4><div class="pc-credits">100 <small>crédits</small></div><div class="pc-price">9 €</div><div class="pc-unit">0,09 € / fiche</div><button class="btn btn-ghost" style="width:100%" onclick="openCheckout('decouverte')">Choisir</button></div>
+      <div class="price-card pop"><div class="pc-tag">POPULAIRE</div><h4>PRO</h4><div class="pc-credits">500 <small>crédits</small></div><div class="pc-price">39 €</div><div class="pc-unit">0,078 € / fiche</div><button class="btn btn-primary" style="width:100%" onclick="openCheckout('pro')">Choisir</button></div>
+      <div class="price-card"><h4>COLLECTIVITÉ</h4><div class="pc-credits">2000 <small>crédits</small></div><div class="pc-price">129 €</div><div class="pc-unit">0,064 € / fiche</div><button class="btn btn-ghost" style="width:100%" onclick="openCheckout('collectivite')">Choisir</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL CHECKOUT STRIPE ===== -->
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal" style="max-width:480px">
+    <button class="icon-btn m-close" onclick="closeModal('checkoutModal')">✕</button>
+    <div id="checkoutBody"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ================================================================
+   CartoPermis IDF — prototype fonctionnel
+   Données : API Paris Data (Opendatasoft explore v2.1)
+   Paiement : Stripe SIMULÉ (voir fonction payNow pour l'intégration réelle)
+   ================================================================ */
+
+const API_BASE='https://parisdata.opendatasoft.com/api/explore/v2.1/catalog/datasets/dossiers-recents-durbanisme';
+const FIELDS='nom_dossier,type_dossier,demandeur,commune,adresse,objet,programme,date_depot,date_decision,etat,type_decision,circonscription,geo_point_2d';
+const PACKS={
+  decouverte:{name:'Pack Découverte',credits:100,price:9},
+  pro:{name:'Pack Pro',credits:500,price:39},
+  collectivite:{name:'Pack Collectivité',credits:2000,price:129}
+};
+
+/* --- stockage sûr (fallback mémoire si localStorage indisponible) --- */
+const memStore={};
+const store={
+  get(k,def){try{const v=localStorage.getItem('cpidf_'+k);return v!==null?JSON.parse(v):def}catch(e){return k in memStore?memStore[k]:def}},
+  set(k,v){try{localStorage.setItem('cpidf_'+k,JSON.stringify(v))}catch(e){memStore[k]=v}}
+};
+
+/* --- état global --- */
+let permits=[];            // tous les dossiers
+let filtered=[];           // dossiers filtrés (carte)
+let credits=store.get('credits',20);
+let unlocked=new Set(store.get('unlocked',[]));
+let favorites=new Set(store.get('favorites',[]));
+let map,clusterGroup,plainGroup,baseOSM,baseSat,baseDark,labelsOn=true,clusterOn=true,satOn=false;
+let markerById={};
+let charts={};
+let adminAuth=false,adminTab='dossiers';
+let dirPage=1;const DIR_PER_PAGE=12;
+let currentDetail=null,pendingCheckout=null;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate=d=>d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+const fmtNum=n=>n.toLocaleString('fr-FR');
+const iconNames={
+  '🪙':'coins','🌙':'moon','☀️':'sun','⚡':'zap','🗺️':'map','🔎':'search','🔍':'search',
+  '📋':'clipboard-list','✅':'circle-check','⏳':'clock-3','❌':'circle-x','📊':'bar-chart-3',
+  '⭐':'star','💳':'credit-card','⚙️':'settings-2','📍':'map-pin','✕':'x','🔒':'lock-keyhole',
+  '📅':'calendar-days','👤':'user-round','⚖️':'scale','🎯':'target','🏗️':'building-2','🔖':'bookmark',
+  '🗄️':'database','🏷️':'tag','🧭':'navigation','🏛️':'landmark','🔗':'link-2','🛡️':'shield-check',
+  '🌐':'globe-2','✉️':'mail','📧':'mail','📞':'phone','🏢':'building-2','↗':'arrow-up-right',
+  '🧪':'flask-conical','📥':'download','👥':'users','🎛️':'sliders-horizontal','💬':'message-circle',
+'🚪':'log-out','📄':'file-text','🔌':'plug','🔄':'rotate-cw','🕷️':'bug','ℹ️':'info','❗':'circle-alert',
+  '⚠️':'triangle-alert','👋':'hand','🗑️':'trash-2','➕':'plus','✏️':'pencil','🔐':'shield-check','📈':'chart-line','🏙️':'building-2','🗂️':'folder-open','🛡️':'shield-check'
+};
+function refreshIcons(root=document){
+  if(!root)return;
+  const keys=Object.keys(iconNames);
+  const escaped=keys.map(key=>key.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')).join('|');
+  if(escaped){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      if(!node.parentElement||['SCRIPT','STYLE','NOSCRIPT'].includes(node.parentElement.tagName))return;
+      if(!keys.some(key=>node.nodeValue.includes(key)))return;
+      const fragment=document.createDocumentFragment();
+      node.nodeValue.split(new RegExp('('+escaped+')','g')).forEach(part=>{
+        if(iconNames[part]){const icon=document.createElement('i');icon.dataset.lucide=iconNames[part];icon.setAttribute('aria-hidden','true');fragment.appendChild(icon)}
+        else if(part)fragment.appendChild(document.createTextNode(part));
+      });
+      node.parentNode.replaceChild(fragment,node);
+    });
+  }
+  if(window.lucide)window.lucide.createIcons({attrs:{'aria-hidden':'true'}});
+}
+function ico(name){return `<i data-lucide="${name}" aria-hidden="true"></i>`}
+
+function toast(msg,type=''){
+  const t=document.createElement('div');t.className='toast '+type;t.innerHTML=msg;
+  $('toastWrap').appendChild(t);refreshIcons(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),400)},3200);
+}
+function saveState(){
+  store.set('credits',credits);store.set('unlocked',[...unlocked]);store.set('favorites',[...favorites]);
+}
+function updateCreditsUI(){
+  $('creditsTop').textContent=fmtNum(credits);
+  const s=$('creditsSide');if(s)s.textContent=fmtNum(credits);
+}
+
+/* ================= NAVIGATION ================= */
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  $('view-'+v).classList.add('active');
+  document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),80);setTimeout(()=>map.invalidateSize(),350)}
+  if(v==='stats')renderStats();
+  if(v==='search')renderDirectory();
+  if(v==='admin')renderAdmin();
+  refreshIcons($('view-'+v));
+}
+document.querySelectorAll('#mainNav button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+/* ================= THÈME ================= */
+function toggleTheme(){
+  const dark=document.documentElement.classList.toggle('dark');
+  $('themeBtn').innerHTML=dark?ico('sun'):ico('moon');
+  $('themeBtn').title=dark?'Mode clair':'Mode sombre';
+  $('themeBtn').setAttribute('aria-label',dark?'Activer le mode clair':'Activer le mode sombre');
+  refreshIcons($('themeBtn'));
+  store.set('dark',dark);
+  if(map)setBase(satOn?'sat':'plan');
+  Object.values(charts).forEach(c=>c&&c.destroy());charts={};
+  if($('view-stats').classList.contains('active'))renderStats();
+}
+if(store.get('dark',false)){document.documentElement.classList.add('dark');$('themeBtn').innerHTML=ico('sun');$('themeBtn').title='Mode clair';$('themeBtn').setAttribute('aria-label','Activer le mode clair')}
+
+/* ================= CHARGEMENT DES DONNÉES ================= */
+async function loadData(){
+  const bar=$('loaderBar');bar.style.width='20%';
+  const mapRows=(data)=>data.filter(r=>r.geo_point_2d&&r.geo_point_2d.lat).map((r,i)=>({id:r.nom_dossier||('X'+i),...r}));
+  // 1. Premier lot rapide (300 dossiers) → la carte s'affiche en ~1 s
+  let firstBatchOK=false;
+  try{
+    const r1=await fetch(`${API_BASE}/records?select=${encodeURIComponent(FIELDS)}&limit=100&order_by=date_depot%20desc`);
+    if(r1.ok){
+      const d1=await r1.json();
+      permits=mapRows(d1.results||[]);
+      if(permits.length){
+        filtered=permits.slice();
+        try{initAfterData()}catch(e){console.error(e)}
+        firstBatchOK=true;
+        const m=$('mapLoaderMsg');if(m)m.textContent='Chargement du jeu complet en arrière-plan…';
+      }
+    }
+  }catch(e){console.warn('premier lot indisponible',e)}
+  bar.style.width='45%';
+  // 2. Jeu complet en arrière-plan
+  try{
+    const url=`${API_BASE}/exports/json?select=${encodeURIComponent(FIELDS)}`;
+    const ctrl=new AbortController();const tmo=setTimeout(()=>ctrl.abort(),45000);
+    const res=await fetch(url,{signal:ctrl.signal});clearTimeout(tmo);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    bar.style.width='75%';
+    const data=await res.json();
+    permits=mapRows(Array.isArray(data)?data:[]);
+    toast(`✅ ${fmtNum(permits.length)} dossiers chargés depuis Paris Data`,'ok');
+  }catch(e){
+    console.warn('API complète indisponible',e);
+    if(!firstBatchOK){
+      permits=DEMO_DATA.map((r,i)=>({id:r.nom_dossier||('X'+i),...r}));
+      toast('⚠️ API inaccessible — jeu de démonstration chargé','err');
+    }else{
+      toast('⚠️ Jeu complet indisponible — affichage des 100 dossiers les plus récents','err');
+    }
+  }
+  bar.style.width='100%';setTimeout(()=>{bar.style.opacity='0'},400);
+  filtered=permits.slice();
+  try{initAfterData()}catch(e){console.error('initAfterData',e);loaderError('Une erreur est survenue pendant l\'affichage des données.<br>'+esc(e.message))}
+}
+function hideLoader(){
+  const ld=$('mapLoader');if(!ld)return;
+  ld.style.opacity='0';setTimeout(()=>ld.remove(),450);
+}
+function loaderError(html){
+  const sp=$('mapSpinner');if(sp)sp.remove();
+  const m=$('mapLoaderMsg');if(m)m.innerHTML='⚠️ '+html;
+}
+
+function initAfterData(){
+  // stats accueil
+  const acc=permits.filter(p=>p.etat==='Accordé').length;
+  const enc=permits.filter(p=>p.etat==="En cours d'instruction").length;
+  const ref=permits.filter(p=>p.etat==='Refusé').length;
+  $('hsTotal').textContent=fmtNum(permits.length);
+  $('hsAcc').textContent=fmtNum(acc);
+  $('hsEnc').textContent=fmtNum(enc);
+  $('hsRef').textContent=fmtNum(ref);
+  // select arrondissements
+  const communes=[...new Set(permits.map(p=>p.commune))].filter(c=>c!=null).sort((a,b)=>a-b);
+  $('fCommune').innerHTML='<option value="">Tous les arrondissements</option>'+communes.map(c=>`<option value="${c}">${c}${c===1?'er':'ème'} arrondissement</option>`).join('');
+  renderMarkers();
+  renderFavs();
+  hideLoader();
+  if(map)setTimeout(()=>map.invalidateSize(),100);
+}
+
+/* ================= CARTE ================= */
+function initMap(){
+  map=L.map('map',{zoomControl:false,attributionControl:true}).setView([48.8566,2.3422],13);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  baseOSM=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+  baseDark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'});
+  baseSat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri, Maxar, Earthstar Geographics'});
+  (document.documentElement.classList.contains('dark')?baseDark:baseOSM).addTo(map);
+  // repli automatique si le plugin markercluster n'a pas pu être chargé
+  clusterGroup=(typeof L.markerClusterGroup==='function')
+    ?L.markerClusterGroup({maxClusterRadius:46,showCoverageOnHover:false,spiderfyOnMaxZoom:true,chunkedLoading:true})
+    :L.layerGroup();
+  plainGroup=L.layerGroup();
+  map.addLayer(clusterGroup);
+  window.addEventListener('resize',()=>map&&map.invalidateSize());
+}
+function statusColor(etat){
+  if(etat==='Accordé')return'var(--green)';
+  if(etat==='Refusé')return'var(--red)';
+  return'var(--blue)';
+}
+function makeMarker(p){
+  const c=statusColor(p.etat);
+  const icon=L.divIcon({className:'',html:`<div class="pmarker" style="width:15px;height:15px;background:${c}"></div>`,iconSize:[15,15],iconAnchor:[8,8]});
+  const m=L.marker([p.geo_point_2d.lat,p.geo_point_2d.lon],{icon});
+  if(labelsOn)m.bindTooltip(p.nom_dossier||'',{direction:'top',offset:[0,-8],opacity:.92});
+  m.bindPopup(`
+    <span class="pop-ref">${esc(p.nom_dossier)}</span>
+    <div class="pop-title">${esc(p.type_dossier||'Dossier')}</div>
+    <div class="pop-addr">${ico('map-pin')} ${esc(p.adresse||'Adresse non précisée')}</div>
+    <div class="pop-obj">${esc(p.objet||'')}</div>
+    <span class="badge ${p.etat==='Accordé'?'acc':p.etat==='Refusé'?'ref':'enc'}">${esc(p.etat||'—')}</span>
+    <div style="margin-top:9px"><span class="pop-link" onclick="openDetail('${esc(p.id).replace(/'/g,"\\'")}')">Voir les détails →</span></div>`);
+  return m;
+}
+function renderMarkers(){
+  if(!map||!clusterGroup)return;
+  clusterGroup.clearLayers();plainGroup.clearLayers();markerById={};
+  filtered.forEach(p=>{
+    const m=makeMarker(p);markerById[p.id]=m;
+    (clusterOn?clusterGroup:plainGroup).addLayer(m);
+  });
+  $('mapCount').textContent=`${fmtNum(filtered.length)} / ${fmtNum(permits.length)} dossiers affichés`;
+  refreshIcons($('map'));
+}
+function setBase(mode){
+  satOn=(mode==='sat');
+  [baseOSM,baseSat,baseDark].forEach(l=>map.removeLayer(l));
+  if(satOn)baseSat.addTo(map);
+  else (document.documentElement.classList.contains('dark')?baseDark:baseOSM).addTo(map);
+  $('msPlan').classList.toggle('active',!satOn);
+  $('msSat').classList.toggle('active',satOn);
+  $('tglSat').classList.toggle('on',satOn);
+}
+function toggleSatellite(){setBase(satOn?'plan':'sat')}
+function toggleCluster(){
+  clusterOn=!clusterOn;$('tglCluster').classList.toggle('on',clusterOn);
+  map.removeLayer(clusterOn?plainGroup:clusterGroup);
+  map.addLayer(clusterOn?clusterGroup:plainGroup);
+  renderMarkers();
+}
+function toggleLabels(){
+  labelsOn=!labelsOn;$('tglLabels').classList.toggle('on',labelsOn);
+  renderMarkers();
+}
+
+/* ================= FILTRES ================= */
+function applyFilters(){
+  const q=($('mapSearch').value||'').toLowerCase().trim();
+  const et=$('fEtat').value,ty=$('fType').value,ci=$('fCirc').value,co=$('fCommune').value,de=$('fDecision').value;
+  const dmin=$('fDateMin').value,dmax=$('fDateMax').value;
+  filtered=permits.filter(p=>{
+    if(et&&p.etat!==et)return false;
+    if(ty&&p.type_dossier!==ty)return false;
+    if(ci&&p.circonscription!==ci)return false;
+    if(co&&String(p.commune)!==co)return false;
+    if(de&&p.type_decision!==de)return false;
+    if(dmin&&(!p.date_depot||p.date_depot<dmin))return false;
+    if(dmax&&(!p.date_depot||p.date_depot>dmax))return false;
+    if(q){
+      const hay=`${p.nom_dossier} ${p.adresse} ${p.objet} ${p.demandeur}`.toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+  renderMarkers();
+}
+function resetFilters(){
+  ['fEtat','fType','fCirc','fCommune','fDecision'].forEach(id=>$(id).value='');
+  $('fDateMin').value='';$('fDateMax').value='';$('mapSearch').value='';
+  applyFilters();
+}
+$('mapSearch').addEventListener('input',()=>{clearTimeout(window._mst);window._mst=setTimeout(applyFilters,250)});
+
+/* ================= FAVORIS ================= */
+function renderFavs(){
+  const list=$('favList');
+  const favs=permits.filter(p=>favorites.has(p.id));
+  $('favCount').textContent=favs.length?favs.length+' enregistré'+(favs.length>1?'s':''):'';
+  if(!favs.length){list.innerHTML='<div class="empty-note">Aucune sélection pour l\'instant. Ouvrez une fiche et cliquez sur ⭐ pour l\'enregistrer ici.</div>';return}
+  list.innerHTML=favs.slice(0,12).map(p=>`
+    <div class="recent-item" onclick="focusPermit('${esc(p.id).replace(/'/g,"\\'")}')">
+      <div><div class="r-name">${esc(p.nom_dossier)}</div><div class="r-type">${esc(p.type_dossier||'')} · ${esc(p.etat||'')}</div></div>
+      <button class="r-del" title="Retirer" onclick="event.stopPropagation();toggleFav('${esc(p.id).replace(/'/g,"\\'")}')">🗑️</button>
+    </div>`).join('');
+}
+function toggleFav(id){
+  if(favorites.has(id)){favorites.delete(id);toast('Retiré de vos sélections')}
+  else{favorites.add(id);toast('⭐ Ajouté à vos sélections','ok')}
+  saveState();renderFavs();
+  if(currentDetail===id)openDetail(id,detailTab);
+}
+function focusPermit(id){
+  showView('map');
+  const p=permits.find(x=>x.id===id);if(!p)return;
+  setTimeout(()=>{
+    map.setView([p.geo_point_2d.lat,p.geo_point_2d.lon],17);
+    const m=markerById[id];if(m)m.openPopup();
+    openDetail(id);
+  },120);
+}
+
+/* ================= FICHE DÉTAILLÉE (crédits) ================= */
+let detailTab='general';
+const enrichCache={};   // id → {parcelle, ban} (cadastre IGN + Base Adresse Nationale)
+
+function parseRef(ref){
+  const m=/^([A-Z]{2})\s*(\d{3})\s*(\d{3})\s*(\d{2})\s*([A-Z]?\s*\d+)/.exec(ref||'');
+  if(!m)return null;
+  const types={DP:'Déclaration préalable',PC:'Permis de construire',PD:'Permis de démolir',PA:"Permis d'aménager"};
+  return{sigle:m[1],typeLabel:types[m[1]]||m[1],dep:m[2],communeCode:m[2]+m[3],arr:parseInt(m[3],10)%100,annee:'20'+m[4],numero:m[5].replace(/\s/g,'')};
+}
+function joursEntre(a,b){if(!a||!b)return null;const d=Math.round((new Date(b)-new Date(a))/86400000);return d>=0?d:null}
+function delaiMoyenArr(arr){
+  const ds=permits.filter(p=>p.commune===arr&&p.date_depot&&p.date_decision).map(p=>joursEntre(p.date_depot,p.date_decision)).filter(d=>d!=null);
+  return ds.length?Math.round(ds.reduce((s,x)=>s+x,0)/ds.length):null;
+}
+function mairieInfo(arr){
+  if(!arr)return null;
+  const centre=arr<=4;
+  return{
+    nom:centre?'Mairie de Paris Centre (1er-2e-3e-4e)':`Mairie du ${arr}${arr===1?'er':'e'} arrondissement`,
+    tel:'39 75',
+    telNote:"Standard officiel de la Ville de Paris (service urbanisme) — prix d'un appel local",
+    site:centre?'https://mairiepariscentre.paris.fr':`https://mairie${String(arr).padStart(2,'0')}.paris.fr`
+  };
+}
+async function fetchEnrichment(p){
+  if(enrichCache[p.id])return enrichCache[p.id];
+  const out={};const lon=p.geo_point_2d.lon,lat=p.geo_point_2d.lat;
+  await Promise.all([
+    // Parcelle cadastrale — API Carto IGN (service public, gratuit)
+    fetch('https://apicarto.ign.fr/api/cadastre/parcelle?geom='+encodeURIComponent(JSON.stringify({type:'Point',coordinates:[lon,lat]}))+'&source_ign=PCI')
+      .then(r=>r.json()).then(d=>{if(d.features&&d.features[0])out.parcelle=d.features[0].properties}).catch(()=>{}),
+    // Adresse normalisée — Base Adresse Nationale (data.gouv.fr)
+    fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${lon}&lat=${lat}`)
+      .then(r=>r.json()).then(d=>{if(d.features&&d.features[0])out.ban=d.features[0].properties}).catch(()=>{})
+  ]);
+  enrichCache[p.id]=out;
+  return out;
+}
+function lockboxHTML(id,msg){
+  return`<div class="dp-lockbox">
+    <div class="lk-icon">🔒</div>
+    <p><b>${msg}</b><br>Débloquez la fiche définitivement pour 1 crédit.</p>
+    <button class="btn btn-primary" onclick="unlockPermit('${esc(id).replace(/'/g,"\\'")}')">🪙 Débloquer — 1 crédit</button>
+    <div style="font-size:11px;color:var(--text3);margin-top:9px">Solde actuel : ${fmtNum(credits)} crédit${credits>1?'s':''}</div>
+  </div>`;
+}
+function field(label,value){return`<div class="dp-field"><div class="f-label">${label}</div><div class="f-value">${value}</div></div>`}
+
+function renderDetailBody(p){
+  const id=p.id,isUnlocked=unlocked.has(id);
+  /* ---------- Onglet GÉNÉRAL ---------- */
+  if(detailTab==='general'){
+    if(!isUnlocked)return field('🗂️ Type de dossier',esc(p.type_dossier||'—'))
+      +field('📅 Date de dépôt',fmtDate(p.date_depot))
+      +lockboxHTML(id,'Fiche complète verrouillée<br>Demandeur, objet détaillé, programme et décision.');
+    return field('🗂️ Type de dossier',esc(p.type_dossier||'—'))
+      +field('👤 Demandeur',esc(p.demandeur||'Non communiqué'))
+      +field('📅 Date de dépôt',fmtDate(p.date_depot))
+      +field('✅ Date de décision',fmtDate(p.date_decision))
+      +field('⚖️ Type de décision',esc(p.type_decision||'En attente'))
+      +field('🎯 Objet',esc(p.objet||'—'))
+      +field('🏗️ Programme',esc(p.programme||'—'));
+  }
+  /* ---------- Onglet DÉTAILS ---------- */
+  if(detailTab==='details'){
+    if(!isUnlocked)return lockboxHTML(id,'Analyse détaillée verrouillée<br>Référence décodée, délais d\'instruction, parcelle cadastrale.');
+    const ref=parseRef(p.nom_dossier);
+    let html='';
+    if(ref)html+=field('🔖 Référence décodée',
+      `<b>${ref.sigle}</b> — ${esc(ref.typeLabel)}<br>Commune INSEE : ${ref.communeCode} (Paris ${ref.arr}${ref.arr===1?'er':'e'})<br>Année de dépôt : ${ref.annee} · N° d'ordre : ${esc(ref.numero)}`);
+    const delai=joursEntre(p.date_depot,p.date_decision);
+    const moyen=delaiMoyenArr(p.commune);
+    let dtxt=delai!=null
+      ?`<b>${delai} jours</b> entre le dépôt et la décision`
+      :`En cours — déposé il y a <b>${joursEntre(p.date_depot,new Date().toISOString().slice(0,10))??'—'} jours</b>`;
+    if(moyen!=null){
+      dtxt+=`<br>Moyenne de l'arrondissement : ${moyen} jours`;
+      if(delai!=null)dtxt+=delai<=moyen?' <span style="color:var(--green-text);font-weight:700">(plus rapide ✓)</span>':' <span style="color:var(--amber-text);font-weight:700">(plus lent)</span>';
+    }
+    html+=field("⏱️ Délai d'instruction",dtxt);
+    const en=enrichCache[id];
+    if(!en){
+      html+=field('🗄️ Parcelle cadastrale','<span style="color:var(--text3)">Interrogation du cadastre (IGN)…</span>');
+    }else{
+      if(en.parcelle){
+        const pc=en.parcelle;
+        html+=field('🗄️ Parcelle cadastrale (IGN)',
+          `Section <b>${esc(pc.section)}</b> · Parcelle <b>${esc(pc.numero)}</b><br>Contenance : ${pc.contenance?fmtNum(pc.contenance)+' m²':'—'}<br><span style="font-size:11.5px;color:var(--text3)">Identifiant : ${esc(pc.idu||'—')}</span>`);
+      }else html+=field('🗄️ Parcelle cadastrale','<span style="color:var(--text3)">Aucune parcelle trouvée à ces coordonnées.</span>');
+      if(en.ban)html+=field('🏷️ Adresse normalisée (BAN)',`${esc(en.ban.label||'—')}<br><span style="font-size:11.5px;color:var(--text3)">Code INSEE : ${esc(en.ban.citycode||'—')}${en.ban.id?' · Clé BAN : '+esc(en.ban.id):''}</span>`);
+    }
+    html+=field('🧭 Coordonnées GPS',`${p.geo_point_2d.lat.toFixed(6)}, ${p.geo_point_2d.lon.toFixed(6)}`);
+    return html;
+  }
+  /* ---------- Onglet INFOS (accès libre) ---------- */
+  const mairie=mairieInfo(p.commune);
+  const lat=p.geo_point_2d.lat,lon=p.geo_point_2d.lon;
+  const arrP=permits.filter(x=>x.commune===p.commune);
+  const arrAcc=arrP.filter(x=>x.etat==='Accordé').length;
+  const arrDec=arrP.filter(x=>x.etat==='Accordé'||x.etat==='Refusé').length;
+  let html='';
+  if(mairie)html+=field('🏛️ Service urbanisme compétent',
+    `<b>${esc(mairie.nom)}</b><br>📞 <b>${mairie.tel}</b> — <span style="font-size:11.5px;color:var(--text3)">${esc(mairie.telNote)}</span><br>🌐 <a href="${mairie.site}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">${mairie.site.replace('https://','')}</a>`);
+  html+=field('🔗 Liens utiles',
+    `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Google Maps</a> · `
+    +`<a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Street View</a> · `
+    +`<a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=19/${lat}/${lon}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">OpenStreetMap</a><br>`
+    +`<a href="https://www.geoportail-urbanisme.gouv.fr/map/#tile=1&lon=${lon}&lat=${lat}&zoom=18" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Géoportail de l'urbanisme</a> · `
+    +`<a href="https://www.geoportail.gouv.fr/carte?c=${lon},${lat}&z=19" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Géoportail (cadastre)</a>`);
+  if(arrP.length)html+=field(`📊 Activité du ${p.commune}${p.commune===1?'er':'e'} arrondissement`,
+    `${fmtNum(arrP.length)} dossiers récents · Taux d'accord : <b>${arrDec?Math.round(arrAcc/arrDec*100)+' %':'—'}</b><br>Délai moyen d'instruction : ${delaiMoyenArr(p.commune)??'—'} jours`);
+  html+=field('🛡️ Données personnelles',
+    `<span style="font-size:12px;color:var(--text3)">Les coordonnées des demandeurs (téléphone, e-mail) ne sont pas publiées dans les données ouvertes, conformément au RGPD. Pour consulter un dossier complet, adressez-vous au service urbanisme ci-dessus en citant la référence <b>${esc(p.nom_dossier)}</b>.</span>`);
+  return html;
+}
+
+function openDetail(id,tab){
+  const p=permits.find(x=>x.id===id);if(!p)return;
+  currentDetail=id;detailTab=tab||'general';
+  $('detailPanel').classList.add('open');
+  const badge=p.etat==='Accordé'?`<span class="badge acc">${ico('circle-check')} Accordé</span>`:p.etat==='Refusé'?`<span class="badge ref">${ico('circle-x')} Refusé</span>`:`<span class="badge enc">${ico('clock-3')} En instruction</span>`;
+  const favIcon=ico('star');
+  const idEsc=esc(id).replace(/'/g,"\\'");
+  $('detailContent').innerHTML=`
+    <div class="dp-card">
+      <div class="dp-ref-row"><span class="dp-ref">${esc(p.nom_dossier)}</span>${badge}</div>
+      <div class="dp-title">${esc(p.type_dossier||'Dossier d\'urbanisme')}</div>
+      <div class="dp-addr">${ico('map-pin')} <span>${esc(p.adresse||'Adresse non précisée')}</span></div>
+      <div class="dp-tabs">
+        <button class="${detailTab==='general'?'active':''}" onclick="openDetail('${idEsc}','general')">Général</button>
+        <button class="${detailTab==='details'?'active':''}" onclick="openDetail('${idEsc}','details')">Détails</button>
+        <button class="${detailTab==='infos'?'active':''}" onclick="openDetail('${idEsc}','infos')">Infos</button>
+      </div>
+      <div id="dpBody">${renderDetailBody(p)}</div>
+      <div class="dp-actions">
+        <button class="btn btn-primary" onclick="focusPermit('${idEsc}')"><i data-lucide="map" aria-hidden="true"></i> Voir sur la carte</button>
+        <button class="btn btn-ghost fav-btn ${favorites.has(id)?'faved':''}" onclick="toggleFav('${idEsc}')">${favIcon} Favori</button>
+        <button class="btn btn-ghost" title="Partager" aria-label="Partager" onclick="sharePermit('${idEsc}')"><i data-lucide="share-2" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div style="font-weight:800;font-size:14px;margin-bottom:13px">ℹ️ Informations</div>
+      <div class="info-grid">
+        <div class="info-cell"><div class="ic-label">Commune</div><div class="ic-value">${p.commune?p.commune+(p.commune===1?'er':'ème'):'—'}</div></div>
+        <div class="info-cell"><div class="ic-label">Circonscription</div><div class="ic-value">${esc(p.circonscription||'—')}</div></div>
+      </div>
+    </div>`;
+  refreshIcons($('detailContent'));
+  // Enrichissement cadastre/BAN chargé à la volée sur l'onglet Détails
+  if(detailTab==='details'&&unlocked.has(id)&&!enrichCache[id]){
+    fetchEnrichment(p).then(()=>{
+      if(currentDetail===id&&detailTab==='details'){const b=$('dpBody');if(b){b.innerHTML=renderDetailBody(p);refreshIcons(b)}}
+    });
+  }
+  if(!$('view-map').classList.contains('active'))showView('map');
+}
+function closeDetail(){$('detailPanel').classList.remove('open');currentDetail=null}
+function unlockPermit(id){
+  if(unlocked.has(id)){openDetail(id,detailTab);return}
+  if(credits<1){
+    toast('❌ Crédits insuffisants — rechargez votre compte','err');
+    openCreditsModal();return;
+  }
+  credits-=1;unlocked.add(id);saveState();updateCreditsUI();
+  toast('🔓 Fiche débloquée · −1 crédit','ok');
+  openDetail(id,detailTab);
+}
+function sharePermit(id){
+  const p=permits.find(x=>x.id===id);if(!p)return;
+  const txt=`${p.nom_dossier} — ${p.type_dossier} · ${p.adresse} (via CartoPermis IDF)`;
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast('🔗 Lien de partage copié !','ok')).catch(()=>toast(txt))}
+  else toast(txt);
+}
+
+/* ================= ANNUAIRE / RECHERCHE ================= */
+function getDirResults(){
+  const q=($('dirSearch').value||'').toLowerCase().trim();
+  const et=$('dirEtat').value,ty=$('dirType').value,sort=$('dirSort').value;
+  let res=permits.filter(p=>{
+    if(et&&p.etat!==et)return false;
+    if(ty&&p.type_dossier!==ty)return false;
+    if(q){const hay=`${p.nom_dossier} ${p.adresse} ${p.objet} ${p.demandeur} ${p.programme}`.toLowerCase();if(!hay.includes(q))return false}
+    return true;
+  });
+  if(sort==='date_desc')res.sort((a,b)=>(b.date_depot||'').localeCompare(a.date_depot||''));
+  if(sort==='date_asc')res.sort((a,b)=>(a.date_depot||'').localeCompare(b.date_depot||''));
+  if(sort==='commune')res.sort((a,b)=>(a.commune||0)-(b.commune||0));
+  return res;
+}
+function renderDirectory(){
+  const res=getDirResults();
+  const pages=Math.max(1,Math.ceil(res.length/DIR_PER_PAGE));
+  if(dirPage>pages)dirPage=pages;
+  const slice=res.slice((dirPage-1)*DIR_PER_PAGE,dirPage*DIR_PER_PAGE);
+  $('dirCount').textContent=`${fmtNum(res.length)} dossier${res.length>1?'s':''} trouvé${res.length>1?'s':''}`;
+  $('dirResults').innerHTML=slice.map(p=>`
+    <div class="result-card" onclick="openDetail('${esc(p.id).replace(/'/g,"\\'")}')">
+      <span class="rc-dot" style="background:${statusColor(p.etat)}"></span>
+      <div class="rc-main">
+        <div class="rc-title">${esc(p.type_dossier||'Dossier')} <span class="rc-ref">${esc(p.nom_dossier)}</span></div>
+        <div class="rc-addr">${ico('map-pin')} ${esc(p.adresse||'—')}</div>
+      </div>
+      <span class="badge ${p.etat==='Accordé'?'acc':p.etat==='Refusé'?'ref':'enc'}">${esc(p.etat||'—')}</span>
+      <span class="rc-date">Déposé le ${fmtDate(p.date_depot)}</span>
+    </div>`).join('')||'<div class="empty-note">Aucun résultat pour cette recherche.</div>';
+  // pagination
+  let pg='';
+  const btn=(n,l,dis,act)=>`<button ${dis?'disabled':''} class="${act?'active':''}" onclick="dirPage=${n};renderDirectory()">${l}</button>`;
+  pg+=btn(dirPage-1,'‹',dirPage===1);
+  const start=Math.max(1,dirPage-2),end=Math.min(pages,start+4);
+  for(let i=start;i<=end;i++)pg+=btn(i,i,false,i===dirPage);
+  pg+=btn(dirPage+1,'›',dirPage===pages);
+  $('dirPagination').innerHTML=pages>1?pg:'';
+  refreshIcons($('dirResults'));
+}
+['dirSearch','dirEtat','dirType','dirSort'].forEach(id=>{
+  $(id).addEventListener(id==='dirSearch'?'input':'change',()=>{dirPage=1;clearTimeout(window._dst);window._dst=setTimeout(renderDirectory,200)});
+});
+
+/* ================= STATISTIQUES ================= */
+function chartColors(){
+  const dark=document.documentElement.classList.contains('dark');
+  return dark
+    ? {grid:'rgba(255,255,255,.12)',text:'#c4c4c4',accent:'#f2f2f2',muted:'#a8a8a8',soft:'#8f8f8f',green:'#51d88a',blue:'#6fa8e6',red:'#ef766e'}
+    : {grid:'rgba(30,33,48,.07)',text:'#6b7089',accent:'#0e776b',muted:'#2c9a67',soft:'#4285c5',green:'#2c9a67',blue:'#4285c5',red:'#d85c52'};
+}
+function renderStats(){
+  if(!permits.length)return;
+  if(typeof Chart==='undefined'){toast('⚠️ Bibliothèque de graphiques non chargée — vérifiez votre connexion','err');return}
+  const acc=permits.filter(p=>p.etat==='Accordé').length;
+  const dec=permits.filter(p=>p.etat==='Accordé'||p.etat==='Refusé').length;
+  $('stTotal').textContent=fmtNum(permits.length);
+  $('stTaux').textContent=dec?Math.round(acc/dec*100)+' %':'—';
+  $('stPC').textContent=fmtNum(permits.filter(p=>p.type_dossier==='Permis de construire').length);
+  const byCom={};permits.forEach(p=>{if(p.commune)byCom[p.commune]=(byCom[p.commune]||0)+1});
+  const topArr=Object.entries(byCom).sort((a,b)=>b[1]-a[1])[0];
+  $('stTopArr').textContent=topArr?topArr[0]+(topArr[0]==='1'?'er':'ème'):'—';
+
+  const cc=chartColors();
+  Chart.defaults.color=cc.text;Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+
+  // évolution mensuelle
+  const byMonth={};permits.forEach(p=>{if(p.date_depot){const k=p.date_depot.slice(0,7);byMonth[k]=(byMonth[k]||0)+1}});
+  const months=Object.keys(byMonth).sort().slice(-18);
+  makeChart('chMonths','line',{
+    labels:months.map(m=>{const[y,mo]=m.split('-');return['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'][+mo-1]+' '+y.slice(2)}),
+    datasets:[{label:'Dossiers déposés',data:months.map(m=>byMonth[m]),borderColor:cc.accent,backgroundColor:document.documentElement.classList.contains('dark')?'rgba(255,255,255,.12)':'rgba(14,119,107,.12)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:cc.accent}]
+  },{scales:{y:{grid:{color:cc.grid},beginAtZero:true},x:{grid:{display:false}}}});
+
+  // types
+  const byType={};permits.forEach(p=>{if(p.type_dossier)byType[p.type_dossier]=(byType[p.type_dossier]||0)+1});
+  makeChart('chTypes','doughnut',{
+    labels:Object.keys(byType),
+    datasets:[{data:Object.values(byType),backgroundColor:document.documentElement.classList.contains('dark')?['#f2f2f2','#bdbdbd','#8f8f8f','#5f5f5f']:['#0e776b','#2c9a67','#c18a35','#4285c5'],borderWidth:0}]
+  },{cutout:'62%',plugins:{legend:{position:'bottom'}}});
+
+  // décisions
+  const byDec={'Favorable':0,'Favorable avec réserves':0,'Favorable tacite':0,'Défavorable':0};
+  permits.forEach(p=>{
+    if(p.type_decision==='Favorable')byDec['Favorable']++;
+    else if(p.type_decision==='FavorableRéservé')byDec['Favorable avec réserves']++;
+    else if(p.type_decision==='FavorableTacite')byDec['Favorable tacite']++;
+    else if(p.type_decision==='Défavorable')byDec['Défavorable']++;
+  });
+  makeChart('chDecisions','doughnut',{
+    labels:Object.keys(byDec),
+    datasets:[{data:Object.values(byDec),backgroundColor:document.documentElement.classList.contains('dark')?['#51d88a','#78c996','#a7dfbb','#ef766e']:['#2c9a67','#86d8aa','#b9ebd0','#d85c52'],borderWidth:0}]
+  },{cutout:'62%',plugins:{legend:{position:'bottom'}}});
+
+  // communes
+  const comKeys=Object.keys(byCom).map(Number).sort((a,b)=>a-b);
+  makeChart('chCommunes','bar',{
+    labels:comKeys.map(c=>c+(c===1?'er':'ème')),
+    datasets:[
+      {label:'Accordés',data:comKeys.map(c=>permits.filter(p=>p.commune===c&&p.etat==='Accordé').length),backgroundColor:cc.green,borderRadius:5,stack:'s'},
+      {label:'En instruction',data:comKeys.map(c=>permits.filter(p=>p.commune===c&&p.etat==="En cours d'instruction").length),backgroundColor:cc.blue,borderRadius:5,stack:'s'},
+      {label:'Refusés',data:comKeys.map(c=>permits.filter(p=>p.commune===c&&p.etat==='Refusé').length),backgroundColor:cc.red,borderRadius:5,stack:'s'}
+    ]
+  },{scales:{y:{grid:{color:cc.grid},stacked:true,beginAtZero:true},x:{grid:{display:false},stacked:true}},plugins:{legend:{position:'bottom'}}});
+}
+function makeChart(id,type,data,opts){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart($(id),{type,data,options:{responsive:true,maintainAspectRatio:false,...opts}});
+}
+
+/* ================= CRÉDITS & STRIPE (SIMULÉ) ================= */
+function openCreditsModal(){$('creditsModal').classList.add('open')}
+function closeModal(id){$(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+function openCheckout(packId){
+  pendingCheckout=packId;
+  const pack=PACKS[packId];
+  closeModal('creditsModal');
+  $('checkoutBody').innerHTML=`
+    <h2>💳 Paiement sécurisé</h2>
+    <div class="m-sub">Finalisez votre achat de crédits CartoPermis IDF.</div>
+    <div class="demo-note">🧪 <b>Mode démonstration</b> — aucun paiement réel n'est effectué. En production, ce formulaire est remplacé par Stripe Checkout / Payment Element (voir le code source, fonction <code>payNow</code>).</div>
+    <div class="stripe-form" style="max-width:100%">
+      <div class="stripe-head"><div><div class="sh-pack">${pack.name}</div><div style="font-size:12px;color:var(--text3)">${fmtNum(pack.credits)} crédits</div></div><div class="sh-price">${pack.price} €</div></div>
+      <div class="stripe-field"><label>E-mail</label><input type="email" id="ckEmail" placeholder="vous@exemple.fr" value=""></div>
+      <div class="stripe-field"><label>Numéro de carte</label><input type="text" id="ckCard" placeholder="4242 4242 4242 4242" maxlength="19" inputmode="numeric"></div>
+      <div class="stripe-row">
+        <div class="stripe-field"><label>Expiration</label><input type="text" id="ckExp" placeholder="MM / AA" maxlength="7"></div>
+        <div class="stripe-field"><label>CVC</label><input type="text" id="ckCvc" placeholder="123" maxlength="4" inputmode="numeric"></div>
+      </div>
+      <button class="stripe-pay" id="payBtn" onclick="payNow()">Payer ${pack.price},00 €</button>
+      <div class="stripe-badge">🔒 Paiement chiffré · Propulsé par <b>stripe</b></div>
+    </div>`;
+  $('checkoutModal').classList.add('open');
+  // formatage carte
+  setTimeout(()=>{
+    const card=$('ckCard');if(card)card.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim()});
+    const exp=$('ckExp');if(exp)exp.addEventListener('input',e=>{let v=e.target.value.replace(/\D/g,'').slice(0,4);if(v.length>2)v=v.slice(0,2)+' / '+v.slice(2);e.target.value=v});
+  },50);
+}
+
+/* En production, remplacer cette fonction par une redirection Stripe Checkout :
+   1. Backend : créer une session -> stripe.checkout.sessions.create({
+        mode:'payment',
+        line_items:[{price:PRICE_ID_DU_PACK, quantity:1}],
+        success_url:'https://votre-domaine.fr/merci?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url:'https://votre-domaine.fr/tarifs'})
+   2. Front : window.location = session.url
+   3. Webhook 'checkout.session.completed' -> créditer le compte utilisateur en base. */
+function payNow(){
+  const pack=PACKS[pendingCheckout];
+  const card=($('ckCard').value||'').replace(/\s/g,'');
+  if(card.length<16){toast('❌ Numéro de carte incomplet (16 chiffres requis)','err');return}
+  if(!$('ckExp').value||($('ckCvc').value||'').length<3){toast('❌ Vérifiez la date d\'expiration et le CVC','err');return}
+  const btn=$('payBtn');btn.disabled=true;btn.textContent='Traitement en cours…';
+  setTimeout(()=>{
+    credits+=pack.credits;saveState();updateCreditsUI();
+    $('checkoutBody').innerHTML=`
+      <div class="success-anim">
+        <div class="check">✓</div>
+        <h2>Paiement confirmé !</h2>
+        <div class="m-sub" style="margin-top:8px">${fmtNum(pack.credits)} crédits ont été ajoutés à votre compte.<br>Nouveau solde : <b>${fmtNum(credits)} crédits</b></div>
+        <button class="btn btn-primary" onclick="closeModal('checkoutModal')">Continuer l'exploration</button>
+      </div>`;
+    toast(`✅ +${fmtNum(pack.credits)} crédits ajoutés`,'ok');
+  },1600);
+}
+
+/* ================= BACK-OFFICE ================= */
+function renderAdmin(){
+  const v=$('view-admin');
+  if(!adminAuth){
+    v.innerHTML=`
+      <div class="page"><div class="page-inner">
+        <div class="login-box">
+          <h2>🔐 Administration</h2>
+          <div class="sub">Accès réservé aux gestionnaires de la plateforme.</div>
+          <input type="text" id="admUser" placeholder="Identifiant" value="">
+          <input type="password" id="admPass" placeholder="Mot de passe" value="">
+          <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Se connecter</button>
+          <div class="hint">Démo : identifiant <b>admin</b> · mot de passe <b>demo</b></div>
+        </div>
+      </div></div>`;
+    return;
+  }
+  const tabs=[
+    ['dossiers','📋 Gestion des dossiers'],
+    ['import','📥 Import de données'],
+    ['users','👥 Utilisateurs'],
+    ['reports','📊 Rapports'],
+    ['filters','🎛️ Filtres de la carte'],
+    ['moderation','💬 Modération']
+  ];
+  v.innerHTML=`
+    <div class="admin-layout">
+      <div class="admin-side">
+        <div style="font-weight:800;font-size:14px;padding:4px 14px 14px">Back-office</div>
+        ${tabs.map(([id,l])=>`<button class="${adminTab===id?'active':''}" onclick="adminTab='${id}';renderAdmin()">${l}</button>`).join('')}
+        <hr class="sep">
+        <button onclick="adminAuth=false;renderAdmin()">🚪 Déconnexion</button>
+      </div>
+      <div class="admin-content" id="adminContent"></div>
+    </div>`;
+  renderAdminTab();
+  refreshIcons(v);
+}
+function adminLogin(){
+  if($('admUser').value==='admin'&&$('admPass').value==='demo'){adminAuth=true;toast('👋 Bienvenue dans le back-office','ok');renderAdmin()}
+  else toast('❌ Identifiants incorrects (essayez admin / demo)','err');
+}
+function renderAdminTab(){
+  const c=$('adminContent');
+  if(adminTab==='dossiers'){
+    const rows=permits.slice(0,40);
+    c.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div class="section-title" style="margin:0">Gestion des dossiers <span style="font-size:12px;color:var(--text3);font-weight:600">(${fmtNum(permits.length)} au total, 40 affichés)</span></div>
+        <button class="btn btn-primary" onclick="toast('➕ Formulaire de création — disponible dans la version connectée au backend')">＋ Nouveau dossier</button>
+      </div>
+      <table class="admin-table"><thead><tr><th>Référence</th><th>Type</th><th>Adresse</th><th>État</th><th>Dépôt</th><th></th></tr></thead><tbody>
+      ${rows.map(p=>`<tr>
+        <td style="font-weight:700">${esc(p.nom_dossier)}</td>
+        <td>${esc((p.type_dossier||'').replace('Déclarations préalables','DP'))}</td>
+        <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.adresse||'—')}</td>
+        <td><span class="badge ${p.etat==='Accordé'?'acc':p.etat==='Refusé'?'ref':'enc'}">${esc(p.etat||'—')}</span></td>
+        <td>${fmtDate(p.date_depot)}</td>
+        <td class="t-actions">
+          <button class="t-edit" onclick="toast('✏️ Édition de ${esc(p.nom_dossier)} — version connectée au backend')">Modifier</button>
+          <button class="t-del" onclick="adminDelete('${esc(p.id).replace(/'/g,"\\'")}')">Suppr.</button>
+        </td></tr>`).join('')}
+      </tbody></table>`;
+  }
+  if(adminTab==='import'){
+    c.innerHTML=`
+      <div class="section-title">Import de données en masse</div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>📄 Import CSV</h3><p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">Chargez un fichier CSV conforme au modèle (référence, type, adresse, coordonnées, dates, état).</p><button class="btn btn-primary" onclick="toast('📄 Sélecteur de fichier — version connectée au backend')">Choisir un fichier…</button></div>
+        <div class="chart-card"><h3>🔌 Synchronisation API</h3><p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">Source : Paris Data · dossiers-recents-durbanisme.<br>Dernière synchro : à l'ouverture de la session.</p><button class="btn btn-primary" onclick="adminResync()">🔄 Resynchroniser maintenant</button></div>
+        <div class="chart-card wide"><h3>🕷️ Web scraping</h3><p style="font-size:13px;color:var(--text2);line-height:1.6">Connecteurs de collecte planifiée sur les bases publiques (Géoportail de l'urbanisme, Sitadel). Configuration des sources, fréquence et règles de dédoublonnage — disponibles dans la version connectée au backend (Scrapy).</p></div>
+      </div>`;
+  }
+  if(adminTab==='users'){
+    const users=[
+      ['Marie Lambert','marie.l@ville-paris.fr','Administrateur','Actif'],
+      ['Karim Benda','k.benda@urbaconseil.fr','Éditeur','Actif'],
+      ['Sophie Chen','s.chen@promoteur-idf.fr','Lecteur Premium','Actif'],
+      ['Jean Perrin','j.perrin@gmail.com','Lecteur','Suspendu']];
+    c.innerHTML=`
+      <div class="section-title">Gestion des utilisateurs</div>
+      <table class="admin-table"><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Statut</th><th></th></tr></thead><tbody>
+      ${users.map(u=>`<tr><td style="font-weight:700">${u[0]}</td><td>${u[1]}</td><td>${u[2]}</td>
+        <td><span class="badge ${u[3]==='Actif'?'acc':'ref'}">${u[3]}</span></td>
+        <td class="t-actions"><button class="t-edit" onclick="toast('✏️ Gestion des droits — version connectée au backend')">Droits</button></td></tr>`).join('')}
+      </tbody></table>`;
+  }
+  if(adminTab==='reports'){
+    c.innerHTML=`
+      <div class="section-title">Rapports &amp; statistiques</div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>📈 Rapport mensuel</h3><p style="font-size:13px;color:var(--text2);margin-bottom:14px">Évolution des dépôts, décisions et délais moyens d'instruction.</p><button class="btn btn-ghost" onclick="toast('📄 Génération PDF — version connectée au backend')">Générer (PDF)</button></div>
+        <div class="chart-card"><h3>🏙️ Rapport par arrondissement</h3><p style="font-size:13px;color:var(--text2);margin-bottom:14px">Analyse détaillée par commune et circonscription.</p><button class="btn btn-ghost" onclick="toast('📄 Génération PDF — version connectée au backend')">Générer (PDF)</button></div>
+        <div class="chart-card wide"><h3>📊 Statistiques en direct</h3><p style="font-size:13px;color:var(--text2)">Les tableaux de bord temps réel sont disponibles dans l'onglet <b>Données &amp; Rapports</b> du front-office. <button class="btn btn-primary" style="margin-top:12px" onclick="showView('stats')">Ouvrir les statistiques</button></p></div>
+      </div>`;
+  }
+  if(adminTab==='filters'){
+    c.innerHTML=`
+      <div class="section-title">Personnalisation des filtres de la carte</div>
+      <div class="chart-card" style="max-width:560px">
+        ${['Statut','Type de dossier','Circonscription','Arrondissement','Type de décision','Période de dépôt'].map((f,i)=>`
+          <div class="opt-row" style="padding:10px 2px;border-bottom:1px solid var(--border)"><span>${f}</span><div class="toggle on" onclick="this.classList.toggle('on');toast('Configuration enregistrée (démo)')"></div></div>`).join('')}
+        <p style="font-size:12px;color:var(--text3);margin-top:12px">Les filtres activés apparaissent dans la barre latérale de la carte interactive.</p>
+      </div>`;
+  }
+  if(adminTab==='moderation'){
+    c.innerHTML=`
+      <div class="section-title">Modération des commentaires</div>
+      <div class="chart-card" style="max-width:640px">
+        <p style="font-size:13.5px;color:var(--text2);line-height:1.7">L'espace participatif (commentaires citoyens sur les dossiers) n'est pas activé sur cette instance. Une fois activé, les signalements et la file de modération apparaîtront ici.</p>
+        <button class="btn btn-ghost" style="margin-top:14px" onclick="toast('💬 Espace participatif — à activer dans la version connectée au backend')">Activer l'espace participatif</button>
+      </div>`;
+  }
+  refreshIcons(c);
+}
+function adminDelete(id){
+  permits=permits.filter(p=>p.id!==id);
+  applyFilters();renderAdminTab();
+  toast('🗑️ Dossier supprimé (session locale uniquement)','ok');
+}
+function adminResync(){toast('🔄 Resynchronisation depuis Paris Data…');loadData()}
+
+/* ================= DONNÉES DE DÉMONSTRATION (secours hors-ligne) ================= */
+const DEMO_DATA=[
+{nom_dossier:"DP 075 118 26 V0384",type_dossier:"Déclarations préalables",demandeur:"SDC 18 RUE HERMEL",commune:18,adresse:"18 RUE HERMEL 75018 PARIS",objet:"ravalement et isolation thermique par l'extérieur des façades de la cour de l'immeuble",programme:"ravalement et isolation thermique par l'extérieur",date_depot:"2026-06-11",date_decision:"2026-07-16",etat:"Accordé",type_decision:"Favorable",circonscription:"NORD",geo_point_2d:{lon:2.3441,lat:48.8925}},
+{nom_dossier:"PC 075 102 26 V0018",type_dossier:"Permis de construire",demandeur:"SCI IMMOBILIERE CHOISEUL",commune:2,adresse:"28 PASSAGE CHOISEUL 75002 PARIS",objet:"Remplacement de la devanture commerciale",programme:"Remplacement de la devanture commerciale. Monument Historique inscrit.",date_depot:"2026-05-29",date_decision:null,etat:"En cours d'instruction",type_decision:null,circonscription:"NORD",geo_point_2d:{lon:2.3354,lat:48.8677}},
+{nom_dossier:"DP 075 109 26 V0302",type_dossier:"Déclarations préalables",demandeur:"MPR",commune:9,adresse:"27 RUE TAITBOUT 75009 PARIS",objet:"ravalement partiel de la façade rue à la suite d'un incendie",programme:"ravalement partiel de la façade rue",date_depot:"2026-07-06",date_decision:null,etat:"En cours d'instruction",type_decision:null,circonscription:"NORD",geo_point_2d:{lon:2.3351,lat:48.8734}},
+{nom_dossier:"PC 075 115 26 V0044",type_dossier:"Permis de construire",demandeur:"SNC VAUGIRARD DEV",commune:15,adresse:"120 RUE DE VAUGIRARD 75015 PARIS",objet:"construction d'un immeuble de logements de 6 étages avec commerce en rez-de-chaussée",programme:"32 logements, 1 commerce, toiture végétalisée",date_depot:"2026-03-14",date_decision:"2026-06-30",etat:"Accordé",type_decision:"FavorableRéservé",circonscription:"SUD",geo_point_2d:{lon:2.3096,lat:48.8449}},
+{nom_dossier:"PD 075 111 26 V0007",type_dossier:"Permis de démolir",demandeur:"VILLE DE PARIS",commune:11,adresse:"45 RUE DE LA ROQUETTE 75011 PARIS",objet:"démolition d'un bâtiment d'ateliers en fond de parcelle",programme:"démolition totale",date_depot:"2026-02-20",date_decision:"2026-05-11",etat:"Refusé",type_decision:"Défavorable",circonscription:"EST",geo_point_2d:{lon:2.3739,lat:48.8558}},
+{nom_dossier:"DP 075 116 26 V0512",type_dossier:"Déclarations préalables",demandeur:"SDC KLEBER 88",commune:16,adresse:"88 AVENUE KLEBER 75116 PARIS",objet:"remplacement des menuiseries extérieures",programme:"remplacement à l'identique des fenêtres",date_depot:"2026-04-02",date_decision:"2026-05-19",etat:"Accordé",type_decision:"FavorableTacite",circonscription:"OUEST",geo_point_2d:{lon:2.2870,lat:48.8681}},
+{nom_dossier:"PA 075 112 26 V0003",type_dossier:"Permis d'aménager",demandeur:"SEMAPA",commune:12,adresse:"QUAI DE BERCY 75012 PARIS",objet:"aménagement d'un espace public paysager en bord de Seine",programme:"esplanade, plantations, piste cyclable",date_depot:"2026-01-15",date_decision:"2026-04-22",etat:"Accordé",type_decision:"Favorable",circonscription:"EST",geo_point_2d:{lon:2.3830,lat:48.8365}},
+{nom_dossier:"PC 075 108 26 V0021",type_dossier:"Permis de construire",demandeur:"HOTEL MONCEAU SAS",commune:8,adresse:"12 RUE DE MONCEAU 75008 PARIS",objet:"surélévation d'un étage et changement de destination en hôtel",programme:"hôtel 4 étoiles, 28 chambres",date_depot:"2026-02-08",date_decision:null,etat:"En cours d'instruction",type_decision:null,circonscription:"NORD",geo_point_2d:{lon:2.3110,lat:48.8760}},
+{nom_dossier:"DP 075 113 26 V0233",type_dossier:"Déclarations préalables",demandeur:"M. ROBERT DUPONT",commune:13,adresse:"7 RUE DE TOLBIAC 75013 PARIS",objet:"création d'une véranda sur cour",programme:"véranda de 12 m²",date_depot:"2026-05-03",date_decision:"2026-06-25",etat:"Refusé",type_decision:"Défavorable",circonscription:"SUD",geo_point_2d:{lon:2.3660,lat:48.8270}},
+{nom_dossier:"PC 075 119 26 V0033",type_dossier:"Permis de construire",demandeur:"PARIS HABITAT",commune:19,adresse:"25 RUE DE CRIMEE 75019 PARIS",objet:"réhabilitation lourde d'un ensemble de logements sociaux",programme:"96 logements réhabilités, isolation extérieure",date_depot:"2026-03-27",date_decision:"2026-07-01",etat:"Accordé",type_decision:"FavorableRéservé",circonscription:"EST",geo_point_2d:{lon:2.3820,lat:48.8890}},
+{nom_dossier:"DP 075 105 26 V0188",type_dossier:"Déclarations préalables",demandeur:"LIBRAIRIE DES ECOLES",commune:5,adresse:"3 RUE DES ECOLES 75005 PARIS",objet:"modification de la devanture et pose d'un store",programme:"devanture bois peint, store banne",date_depot:"2026-06-18",date_decision:null,etat:"En cours d'instruction",type_decision:null,circonscription:"SUD",geo_point_2d:{lon:2.3520,lat:48.8480}},
+{nom_dossier:"PC 075 117 26 V0056",type_dossier:"Permis de construire",demandeur:"GROUPE SCOLAIRE BESSIERES",commune:17,adresse:"40 BOULEVARD BESSIERES 75017 PARIS",objet:"extension d'un groupe scolaire et création d'une cour oasis",programme:"3 classes supplémentaires, cour végétalisée",date_depot:"2026-04-11",date_decision:"2026-07-08",etat:"Accordé",type_decision:"Favorable",circonscription:"NORD",geo_point_2d:{lon:2.3170,lat:48.8970}}
+];
+
+/* ================= INIT (démarrage robuste) ================= */
+refreshIcons();
+updateCreditsUI();
+(function boot(){
+  // 1. Leaflet indisponible ? (aperçu intégré ou hors-ligne) → message clair au lieu d'un spinner infini
+  if(typeof L==='undefined'){
+    loaderError("Les bibliothèques cartographiques n'ont pas pu être chargées.<br><b>Ouvrez ce fichier directement dans votre navigateur</b> (double-clic → Chrome, Safari, Edge…) avec une connexion internet.<br><span style='font-size:11.5px;color:var(--text3)'>Les aperçus intégrés bloquent parfois les ressources externes (Leaflet, fonds de carte).</span>");
+    // Les autres vues (recherche, stats sans graphiques) restent utilisables avec les données de démo
+    permits=DEMO_DATA.map((r,i)=>({id:r.nom_dossier||('X'+i),...r}));
+    filtered=permits.slice();
+    $('hsTotal').textContent=fmtNum(permits.length);
+    $('hsAcc').textContent=fmtNum(permits.filter(p=>p.etat==='Accordé').length);
+    $('hsEnc').textContent=fmtNum(permits.filter(p=>p.etat==="En cours d'instruction").length);
+    $('hsRef').textContent=fmtNum(permits.filter(p=>p.etat==='Refusé').length);
+    renderFavs();
+    return;
+  }
+  // 2. Init carte protégée
+  try{initMap()}catch(e){
+    console.error('initMap',e);
+    loaderError('Erreur d\'initialisation de la carte : '+esc(e.message));
+  }
+  // 3. Chargement des données (avec repli hors-ligne intégré)
+  loadData();
+})();
+</script>
+</body>
+</html>

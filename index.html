@@ -1413,7 +1413,8 @@ async function submitForgotPassword(){
   };
 
   try {
-    const redirectUrl = window.location.origin + window.location.pathname;
+    // Forcer la redirection vers l'application de production Vercel
+    const redirectUrl = 'https://cartopermis-idf.vercel.app';
     
     // Timeout de 7 secondes pour ne pas bloquer l'utilisateur si Supabase est hors-ligne
     const timeoutPromise = new Promise((_, reject) => 

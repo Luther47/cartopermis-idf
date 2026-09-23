@@ -38,7 +38,7 @@ CREATE POLICY "Service role can insert transactions"
 -- Si elle n'existe pas, la créer :
 -- CREATE TABLE IF NOT EXISTS profiles (
 --   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
---   credits integer DEFAULT 20,
+--   credits integer DEFAULT 5,
 --   created_at timestamptz DEFAULT now()
 -- );
 -- ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

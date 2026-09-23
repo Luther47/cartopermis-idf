@@ -1069,7 +1069,7 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
     <div class="section-title" style="font-size:23px">Contact &amp; FAQ</div>
     <p style="font-size:13.5px;color:var(--text2);margin-bottom:22px">Tout ce qu'il faut savoir sur CartoPermis IDF, les données et le système de crédits.</p>
     <details class="faq-item" open><summary>D'où proviennent les données ?</summary><div class="faq-body">Les dossiers proviennent du jeu de données public « Dossiers récents d'urbanisme » publié par la Ville de Paris sur Paris Data (opendatasoft). Ils couvrent les permis de construire, déclarations préalables, permis de démolir et permis d'aménager, et sont rechargés à chaque ouverture de l'application.</div></details>
-    <details class="faq-item"><summary>Comment fonctionne le système de crédits ?</summary><div class="faq-body">La navigation sur la carte, les filtres et la recherche sont gratuits et illimités. La consultation d'une <b>fiche détaillée</b> (demandeur, objet complet, programme, historique de décision) consomme <b>1 crédit</b>. Une fiche débloquée le reste définitivement, sans nouveau débit. Chaque nouveau compte reçoit 20 crédits offerts.</div></details>
+    <details class="faq-item"><summary>Comment fonctionne le système de crédits ?</summary><div class="faq-body">La navigation sur la carte, les filtres et la recherche sont gratuits et illimités. La consultation d'une <b>fiche détaillée</b> (demandeur, objet complet, programme, historique de décision) consomme <b>1 crédit</b>. Une fiche débloquée le reste définitivement, sans nouveau débit. Chaque nouveau compte reçoit 5 crédits offerts.</div></details>
     <details class="faq-item"><summary>Le paiement est-il sécurisé ?</summary><div class="faq-body">Oui. Les paiements sont traités par <b>Stripe</b>, leader mondial du paiement en ligne, certifié PCI-DSS niveau 1. Aucune donnée bancaire ne transite par nos serveurs. Dans cette version de démonstration, le paiement est simulé.</div></details>
     <details class="faq-item"><summary>À quelle fréquence les données sont-elles mises à jour ?</summary><div class="faq-body">Le jeu de données source est actualisé quotidiennement par la Ville de Paris. CartoPermis IDF interroge l'API en direct : vous consultez toujours la dernière version publiée.</div></details>
     <details class="faq-item"><summary>Puis-je exporter les résultats ?</summary><div class="faq-body">L'export CSV des résultats de recherche est inclus dans les formules Pro et Collectivité. Les rapports personnalisés (PDF) sont disponibles pour les collectivités.</div></details>
@@ -1276,7 +1276,7 @@ const store={
 /* --- état global --- */
 let permits=[];            // tous les dossiers
 let filtered=[];           // dossiers filtrés (carte)
-let credits=store.get('credits',20);
+let credits=store.get('credits',5);
 let unlocked=new Set(store.get('unlocked',[]));
 let favorites=new Set(store.get('favorites',[]));
 let map,clusterGroup,plainGroup,baseOSM,baseSat,baseDark,labelsOn=true,clusterOn=true,satOn=false;
@@ -1595,9 +1595,9 @@ async function loadUserData() {
     credits = profile.credits;
     updateCreditsUI();
   } else {
-    credits = 20;
+    credits = 5;
     updateCreditsUI();
-    const { error: insertError } = await sb.from('profiles').insert({ id: currentUser.id, credits: 20 });
+    const { error: insertError } = await sb.from('profiles').insert({ id: currentUser.id, credits: 5 });
     if(insertError) console.error('profiles insert', insertError);
   }
   

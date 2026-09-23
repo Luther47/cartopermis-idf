@@ -95,6 +95,10 @@ input,select{font-family:inherit;color:var(--text)}
 .sidebar-footer{border-top:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
 .sidebar-footer .cr{color:var(--accent);display:flex;align-items:center;gap:7px}
 .sidebar-footer .settings{color:var(--text2);font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px}
+.site-footer{border-top:1px solid var(--border);background:var(--panel);padding:12px 22px;display:flex;align-items:center}
+.admin-link{display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;padding:6px 4px}
+.admin-link:hover{color:var(--text2)}
+.admin-link .lucide{width:14px;height:14px}
 hr.sep{border:none;border-top:1px solid var(--border);margin:16px 0}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);font-weight:600;background:var(--panel2);padding:5px 10px;border-radius:999px;border:1px solid var(--border)}
@@ -645,6 +649,91 @@ html.dark #map{background:#15211d}
   .hero-map__route{animation:none}
 }
 </style>
+<style id="client-dashboard-refresh">
+.client-view{overflow-y:auto;background:var(--bg)}
+.client-view>.page{width:100%;min-width:0}
+.client-page-inner{max-width:1120px}
+.client-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}
+.client-eyebrow{display:block;color:var(--accent);font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
+.client-header h1{font-family:var(--font-display);font-size:clamp(28px,3.2vw,40px);line-height:1.04;letter-spacing:-.045em;margin-bottom:9px}
+.client-header p{max-width:620px;color:var(--text2);font-size:13.5px;line-height:1.55}
+.client-header-actions{display:flex;gap:9px;flex:none}
+.client-summary-grid{display:grid;grid-template-columns:1.08fr 1fr;gap:14px;margin-bottom:28px}
+.client-card{min-height:0;padding:20px;box-shadow:none;display:flex;flex-direction:column;justify-content:space-between}
+.client-card:hover{border-color:var(--border);box-shadow:none;transform:none}
+.client-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.client-card-label{display:flex;align-items:center;gap:10px;color:var(--text2);font-size:12px;font-weight:800}
+.client-card-label .client-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.client-card-label .lucide{width:16px;height:16px}
+.client-status{padding:5px 9px;border-radius:999px;background:var(--green-soft);color:var(--green-text);font-size:10.5px;font-weight:800;white-space:nowrap}
+.client-credit-value{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.client-credit-value strong{font-family:var(--font-display);font-size:36px;line-height:1;letter-spacing:-.05em}
+.client-credit-value span{color:var(--text2);font-size:12px;font-weight:700}
+.client-card-copy{color:var(--text2);font-size:12.5px;line-height:1.5;margin-bottom:17px}
+.client-card-action{align-self:flex-start}
+.client-account-main{display:flex;align-items:center;gap:12px;margin-bottom:17px}
+.client-avatar{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--panel2);border:1px solid var(--border);color:var(--accent)}
+.client-avatar .lucide{width:18px;height:18px}
+.client-account-label{display:block;color:var(--text2);font-size:10.5px;font-weight:700;margin-bottom:3px}
+.client-account-email{display:block;max-width:330px;overflow:hidden;color:var(--text);font-size:13px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.client-section{margin-top:0;margin-bottom:28px}
+.client-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px}
+.client-section-heading h2{font-family:var(--font-display);font-size:20px;line-height:1.1;letter-spacing:-.03em}
+.client-section-meta{color:var(--text2);font-size:11.5px;font-weight:700;white-space:nowrap}
+.client-activity-panel{padding:4px 20px;background:var(--panel);border:1px solid var(--border);border-radius:15px}
+.client-activity-list{display:flex;flex-direction:column}
+.client-activity-row{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) auto auto 24px;align-items:center;gap:12px;padding:13px 0;background:transparent;text-align:left;border-bottom:1px solid var(--border);transition:color .2s ease,transform .2s ease}
+.client-activity-row:last-child{border-bottom:none}
+.client-activity-row:hover{color:var(--accent);transform:translateX(2px)}
+.client-activity-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.client-activity-icon .lucide{width:15px;height:15px}
+.client-activity-main{display:flex;min-width:0;flex-direction:column;gap:3px}
+.client-activity-main strong{overflow:hidden;color:var(--text);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}
+.client-activity-main small{overflow:hidden;color:var(--text2);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.client-activity-row .badge{justify-self:end}
+.client-activity-date{color:var(--text2);font-size:10.5px;white-space:nowrap}
+.client-activity-action{display:flex;align-items:center;justify-content:flex-end;color:var(--text3)}
+.client-activity-action .lucide{width:14px;height:14px}
+.client-inline-empty{display:flex;align-items:center;gap:13px;padding:16px 0;color:var(--text2)}
+.client-inline-empty>.lucide{width:20px;height:20px;color:var(--accent);flex:none}
+.client-inline-empty strong{display:block;color:var(--text);font-size:12.5px;margin-bottom:3px}
+.client-inline-empty p{font-size:11.5px;line-height:1.45}
+.client-favorites-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.client-favorite-card{padding:16px;min-height:174px}
+.client-favorite-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm);transform:translateY(-2px)}
+.client-favorite-title{display:block;overflow:hidden;font-family:var(--font-display);font-size:13px;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+.client-favorite-address{display:block;overflow:hidden;margin:5px 0 10px;color:var(--text2);font-size:11.5px;text-overflow:ellipsis;white-space:nowrap}
+.client-favorite-actions{display:flex;gap:8px;margin-top:14px}
+.client-favorite-actions .btn{flex:1;padding:7px 9px;font-size:11.5px}
+.client-favorite-actions .icon-btn{width:44px;height:44px;color:var(--red);border-color:var(--red-soft);background:var(--red-soft)}
+.client-favorite-actions .icon-btn .lucide{width:14px;height:14px}
+.client-empty-state{grid-column:1/-1;display:flex;align-items:center;gap:18px;padding:25px 24px;border:1px dashed var(--border);border-radius:15px;background:var(--panel);}
+.client-empty-icon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:var(--accent-soft);color:var(--accent);flex:none}
+.client-empty-icon .lucide{width:22px;height:22px}
+.client-empty-state strong{display:block;font-family:var(--font-display);font-size:15px;margin-bottom:4px}
+.client-empty-state p{max-width:560px;color:var(--text2);font-size:12px;line-height:1.5}
+.client-empty-state .btn{margin-left:auto;flex:none}
+@media(max-width:760px){
+  .client-header{align-items:flex-start;flex-direction:column;gap:15px}
+  .client-header-actions{width:100%}
+  .client-header-actions .btn{flex:1}
+  .client-summary-grid{grid-template-columns:1fr}
+  .client-empty-state{align-items:flex-start;flex-wrap:wrap}
+  .client-empty-state .btn{margin-left:64px}
+}
+@media(max-width:560px){
+  .client-view>.page{padding:24px 16px 34px}
+  .client-header h1{font-size:31px}
+  .client-header-actions{flex-direction:column}
+  .client-header-actions .btn{width:100%}
+  .client-card{padding:17px}
+  .client-activity-panel{padding:3px 14px}
+  .client-activity-row{grid-template-columns:31px minmax(0,1fr) 20px;gap:9px}
+  .client-activity-row .badge,.client-activity-date{display:none}
+  .client-empty-state{padding:20px}
+  .client-empty-state .btn{width:100%;margin-left:0}
+}
+</style>
 <style id="icon-refresh">
 .lucide{width:1em;height:1em;stroke-width:2;vertical-align:-.16em;flex:none}
 .btn .lucide{width:15px;height:15px}
@@ -706,6 +795,13 @@ html.dark .toggle.on::after{background:#141414}
 html.dark .hero-map-summary,html.dark .hero-map-legend{background:rgba(20,20,20,.88);color:#c4c4c4;box-shadow:0 10px 24px rgba(0,0,0,.28)}
 html.dark .hero-map-surface::after{background:radial-gradient(circle at 78% 22%,rgba(255,255,255,.08),transparent 26%),linear-gradient(145deg,transparent 35%,rgba(255,255,255,.08) 35.2%,transparent 35.6%)}
 html.dark .modal-overlay{background:rgba(0,0,0,.72)}
+.mobile-filter-btn { display: none; margin-right: 12px; width: 36px; height: 36px; border-radius: 11px; background: var(--panel); border: 1.5px solid var(--border); color: var(--text); align-items: center; justify-content: center; cursor: pointer; }
+.mobile-close-sidebar { display: none; position: absolute; top: 12px; right: 12px; z-index: 100; background: var(--panel); border: 1.5px solid var(--border); border-radius: 50%; width: 32px; height: 32px; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
+@media(max-width:860px) {
+  .mobile-filter-btn { display: flex !important; }
+  .mobile-close-sidebar { display: flex; }
+  .sidebar { z-index: 2000; box-shadow: 4px 0 24px rgba(0,0,0,0.1); width: 300px; max-width: 85vw; }
+}
 </style>
 </head>
 <body>
@@ -724,9 +820,11 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
     <button data-view="search">Recherche avancée</button>
     <button data-view="stats">Données &amp; Rapports</button>
     <button data-view="faq">Contact &amp; FAQ</button>
-    <button data-view="admin">Administration</button>
   </nav>
   <div class="spacer"></div>
+  <button class="btn btn-ghost" id="clientAuthBtn" onclick="openClientAuthModal()" style="padding:7px 12px;font-size:12.5px;margin-right:8px;border:1.5px solid var(--accent);color:var(--accent)">
+    <i data-lucide="user" aria-hidden="true" id="clientAuthIcon"></i> <span id="clientAuthLabel">Se connecter</span>
+  </button>
   <button class="credits-chip" onclick="openCreditsModal()">
     <i data-lucide="coins" aria-hidden="true"></i><span id="creditsTop">—</span> crédits
   </button>
@@ -847,6 +945,7 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 <!-- ===================== VUE CARTE ===================== -->
 <section class="view" id="view-map">
   <aside class="sidebar" id="sidebar">
+    <button class="mobile-close-sidebar" onclick="toggleSidebar()" aria-label="Fermer les filtres"><i data-lucide="x" aria-hidden="true"></i></button>
     <div class="sidebar-scroll">
       <div class="search-box">
         <input type="text" id="mapSearch" placeholder="Rechercher un permis, une adresse...">
@@ -909,6 +1008,7 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
     <div id="map"></div>
     <div class="skeleton-note" id="mapLoader"><div class="spinner" id="mapSpinner"></div><div style="font-size:13px;color:var(--text2);font-weight:600;text-align:center;line-height:1.6;max-width:420px;padding:0 20px" id="mapLoaderMsg">Chargement des dossiers d'urbanisme…</div></div>
     <div class="map-topbox">
+      <button class="mobile-filter-btn" onclick="toggleSidebar()" aria-label="Afficher les filtres"><i data-lucide="filter" aria-hidden="true"></i></button>
       <div style="width:36px;height:36px;border-radius:11px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center"><i data-lucide="map-pin" aria-hidden="true"></i></div>
       <div><div class="city">Paris · Île-de-France</div><div class="sub">Dossiers récents d'urbanisme</div></div>
     </div>
@@ -984,7 +1084,74 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 <!-- ===================== VUE ADMIN ===================== -->
 <section class="view" id="view-admin"></section>
 
+<!-- ===================== VUE CLIENT ===================== -->
+<section class="view client-view" id="view-client">
+  <div class="page">
+    <div class="page-inner client-page-inner">
+      <header class="client-header">
+        <div>
+          <h1>Mon espace client</h1>
+          <p>Retrouvez vos crédits, vos fiches consultées et vos dossiers favoris au même endroit.</p>
+        </div>
+        <div class="client-header-actions">
+          <button class="btn btn-primary" type="button" onclick="showView('map')"><i data-lucide="map" aria-hidden="true"></i> Explorer la carte</button>
+        </div>
+      </header>
+
+      <section class="client-summary-grid" aria-label="Résumé du compte">
+        <article class="chart-card client-card">
+          <div>
+            <div class="client-card-top">
+              <div class="client-card-label"><span class="client-icon"><i data-lucide="coins" aria-hidden="true"></i></span><span>Mes crédits</span></div>
+              <span class="client-status">Compte actif</span>
+            </div>
+            <div class="client-credit-value"><strong id="clientCreditsDisplay">0</strong><span>crédits disponibles</span></div>
+            <p class="client-card-copy">1 crédit permet de déverrouiller définitivement une fiche détaillée.</p>
+          </div>
+          <button class="btn btn-primary client-card-action" type="button" onclick="openCreditsModal()"><i data-lucide="zap" aria-hidden="true"></i> Recharger mes crédits</button>
+        </article>
+
+        <article class="chart-card client-card">
+          <div>
+            <div class="client-card-top">
+              <div class="client-card-label"><span class="client-icon"><i data-lucide="user-round-check" aria-hidden="true"></i></span><span>Mon compte</span></div>
+            </div>
+            <div class="client-account-main">
+              <span class="client-avatar"><i data-lucide="user-round" aria-hidden="true"></i></span>
+              <div><span class="client-account-label">Connecté avec</span><strong class="client-account-email" id="clientEmailDisplay">...</strong></div>
+            </div>
+            <p class="client-card-copy">Vos favoris et vos fiches déverrouillées sont conservés dans ce navigateur.</p>
+          </div>
+          <button class="btn btn-ghost client-card-action" type="button" onclick="clientLogout()"><i data-lucide="log-out" aria-hidden="true"></i> Se déconnecter</button>
+        </article>
+      </section>
+
+      <section class="client-section" aria-labelledby="clientActivityTitle">
+        <div class="client-section-heading">
+          <div><h2 id="clientActivityTitle">Activité récente</h2></div>
+          <span class="client-section-meta" id="clientActivityCount">—</span>
+        </div>
+        <div class="client-activity-panel">
+          <div id="clientActivityWrap" class="client-activity-list" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="client-section" aria-labelledby="clientFavoritesTitle">
+        <div class="client-section-heading">
+          <div><h2 id="clientFavoritesTitle">Mes dossiers favoris</h2></div>
+          <span class="client-section-meta" id="clientFavCount">—</span>
+        </div>
+        <div id="clientFavsWrap" class="client-favorites-grid" aria-live="polite"></div>
+      </section>
+    </div>
+  </div>
+</section>
+
 </div><!-- /main -->
+
+<footer class="site-footer">
+  <button class="admin-link" data-view="admin" onclick="showView('admin')"><i data-lucide="shield-check" aria-hidden="true"></i> Administration</button>
+</footer>
 
 <!-- ===== MODAL CRÉDITS / PRICING ===== -->
 <div class="modal-overlay" id="creditsModal">
@@ -1000,6 +1167,74 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
   </div>
 </div>
 
+<!-- ===== MODAL CLIENT AUTH ===== -->
+<div class="modal-overlay" id="clientAuthModal">
+  <div class="modal" style="max-width:400px">
+    <button class="icon-btn m-close" onclick="closeModal('clientAuthModal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:50px;height:50px;background:var(--accent-soft);color:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px"><i data-lucide="user"></i></div>
+      <h2 style="font-size:19px;font-weight:800">Compte Client</h2>
+      <p style="font-size:13px;color:var(--text2);margin-top:4px">Créez un compte gratuit pour accéder à la carte et aux données.</p>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">E-mail professionnel ou personnel</label>
+      <input type="email" id="clientEmail" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label style="font-size:12px;font-weight:700;color:var(--text2)">Mot de passe</label>
+        <a href="javascript:void(0)" onclick="openForgotPasswordModal()" style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none">Mot de passe oublié ?</a>
+      </div>
+      <input type="password" id="clientPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitClientAuth()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;font-size:14px;padding:12px" onclick="submitClientAuth()">S'inscrire / Se connecter</button>
+    <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:14px">Authentification sécurisée par Supabase.</p>
+  </div>
+</div>
+
+<!-- ===== MODAL MOT DE PASSE OUBLIÉ ===== -->
+<div class="modal-overlay" id="forgotPasswordModal">
+  <div class="modal" style="max-width:400px">
+    <button class="icon-btn m-close" onclick="closeModal('forgotPasswordModal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:50px;height:50px;background:var(--accent-soft);color:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px"><i data-lucide="key-round"></i></div>
+      <h2 style="font-size:19px;font-weight:800">Mot de passe oublié</h2>
+      <p style="font-size:13px;color:var(--text2);margin-top:4px">Entrez votre adresse e-mail. Vous recevrez un lien gratuit pour réinitialiser votre mot de passe.</p>
+    </div>
+    <div id="forgotPasswordContent">
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Votre adresse e-mail</label>
+        <input type="email" id="forgotEmail" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitForgotPassword()">
+      </div>
+      <button class="btn btn-primary" id="forgotSubmitBtn" style="width:100%;font-size:14px;padding:12px" onclick="submitForgotPassword()">Envoyer le lien de réinitialisation</button>
+      <div style="text-align:center;margin-top:14px">
+        <a href="javascript:void(0)" onclick="closeModal('forgotPasswordModal');openClientAuthModal();" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">← Retour à la connexion</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL NOUVEAU MOT DE PASSE ===== -->
+<div class="modal-overlay" id="resetPasswordModal">
+  <div class="modal" style="max-width:400px">
+    <button class="icon-btn m-close" onclick="closeModal('resetPasswordModal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:50px;height:50px;background:var(--accent-soft);color:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px"><i data-lucide="shield-check"></i></div>
+      <h2 style="font-size:19px;font-weight:800">Nouveau mot de passe</h2>
+      <p style="font-size:13px;color:var(--text2);margin-top:4px">Choisissez votre nouveau mot de passe sécurisé.</p>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Nouveau mot de passe (6 car. min.)</label>
+      <input type="password" id="newPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Confirmer le nouveau mot de passe</label>
+      <input type="password" id="confirmPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitNewPassword()">
+    </div>
+    <button class="btn btn-primary" id="resetSubmitBtn" style="width:100%;font-size:14px;padding:12px" onclick="submitNewPassword()">Enregistrer le mot de passe</button>
+  </div>
+</div>
+
 <!-- ===== MODAL CHECKOUT STRIPE ===== -->
 <div class="modal-overlay" id="checkoutModal">
   <div class="modal" style="max-width:480px">
@@ -1012,17 +1247,16 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ================================================================
-   CartoPermis IDF — prototype fonctionnel
-   Données : API Paris Data (Opendatasoft explore v2.1)
-   Paiement : Stripe Checkout (paiement réel)
-   ================================================================ */
-
 const SUPABASE_URL = 'https://qodxbgbjbkkstndfhueo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Xvhx-Uo6ZnAENV7bGfmuPA_f8HRIDMR';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const STRIPE_CHECKOUT_URL = SUPABASE_URL + '/functions/v1/create-checkout-session';
 let currentUser = null;
+
+/* ================================================================
+   CartoPermis IDF — prototype fonctionnel
+   Données : API Paris Data (Opendatasoft explore v2.1)
+   Paiement : Stripe SIMULÉ (voir fonction payNow pour l'intégration réelle)
+   ================================================================ */
 
 const API_BASE='https://parisdata.opendatasoft.com/api/explore/v2.1/catalog/datasets/dossiers-recents-durbanisme';
 const FIELDS='nom_dossier,type_dossier,demandeur,commune,adresse,objet,programme,date_depot,date_decision,etat,type_decision,circonscription,geo_point_2d';
@@ -1049,6 +1283,7 @@ let map,clusterGroup,plainGroup,baseOSM,baseSat,baseDark,labelsOn=true,clusterOn
 let markerById={};
 let charts={};
 let adminAuth=false,adminTab='dossiers';
+let clientAuth=false,pendingView=null;
 let dirPage=1;const DIR_PER_PAGE=12;
 let currentDetail=null,pendingCheckout=null;
 
@@ -1103,6 +1338,11 @@ function updateCreditsUI(){
 
 /* ================= NAVIGATION ================= */
 function showView(v){
+  if((v==='map'||v==='search'||v==='stats') && !clientAuth){
+    pendingView=v;
+    openClientAuthModal();
+    return;
+  }
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   $('view-'+v).classList.add('active');
   document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
@@ -1110,9 +1350,294 @@ function showView(v){
   if(v==='stats')renderStats();
   if(v==='search')renderDirectory();
   if(v==='admin')renderAdmin();
+  if(v==='client')renderClientDashboard();
   refreshIcons($('view-'+v));
 }
 document.querySelectorAll('#mainNav button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+function openClientAuthModal(){
+  if(clientAuth) {
+    showView('client');
+    return;
+  }
+  $('clientEmail').value='';
+  $('clientPass').value='';
+  $('clientAuthModal').classList.add('open');
+  setTimeout(()=> refreshIcons($('clientAuthModal')), 10);
+}
+
+function openForgotPasswordModal(){
+  closeModal('clientAuthModal');
+  const existingEmail = $('clientEmail') ? $('clientEmail').value.trim() : '';
+  $('forgotPasswordContent').innerHTML = `
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Votre adresse e-mail</label>
+      <input type="email" id="forgotEmail" value="${esc(existingEmail)}" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitForgotPassword()">
+    </div>
+    <button class="btn btn-primary" id="forgotSubmitBtn" style="width:100%;font-size:14px;padding:12px" onclick="submitForgotPassword()">Envoyer le lien de réinitialisation</button>
+    <div style="text-align:center;margin-top:14px">
+      <a href="javascript:void(0)" onclick="closeModal('forgotPasswordModal');openClientAuthModal();" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">← Retour à la connexion</a>
+    </div>
+  `;
+  $('forgotPasswordModal').classList.add('open');
+  setTimeout(()=> refreshIcons($('forgotPasswordModal')), 10);
+  setTimeout(()=>{ const fe=$('forgotEmail'); if(fe) fe.focus(); }, 100);
+}
+
+async function submitForgotPassword(){
+  const email = $('forgotEmail') ? $('forgotEmail').value.trim() : '';
+  if(!email || !email.includes('@')){
+    toast('❌ Veuillez entrer une adresse e-mail valide', 'err');
+    return;
+  }
+  const btn = $('forgotSubmitBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+
+  try {
+    const redirectUrl = window.location.origin + window.location.pathname;
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+
+    if(error){
+      toast('❌ Erreur : ' + error.message, 'err');
+      if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+      return;
+    }
+
+    $('forgotPasswordContent').innerHTML = `
+      <div style="text-align:center;padding:10px 0">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--green-soft);color:var(--green-text);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px"><i data-lucide="mail-check"></i></div>
+        <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">E-mail envoyé avec succès !</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:18px">
+          Un lien gratuit de réinitialisation a été envoyé à <b>${esc(email)}</b>.<br>
+          Consultez votre boîte mail et cliquez sur le lien pour choisir un nouveau mot de passe.<br>
+          <span style="font-size:11.5px;color:var(--text3);display:inline-block;margin-top:6px">(Pensez à vérifier votre dossier spams)</span>
+        </p>
+        <button class="btn btn-primary" style="width:100%;padding:11px" onclick="closeModal('forgotPasswordModal')">J'ai compris</button>
+      </div>
+    `;
+    refreshIcons($('forgotPasswordContent'));
+    toast('📧 Lien de réinitialisation envoyé !', 'ok');
+  } catch(e) {
+    console.error('resetPasswordForEmail error', e);
+    toast('❌ Une erreur est survenue lors de l\'envoi', 'err');
+    if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+  }
+}
+
+function openResetPasswordModal(){
+  if($('newPass')) $('newPass').value = '';
+  if($('confirmPass')) $('confirmPass').value = '';
+  $('resetPasswordModal').classList.add('open');
+  setTimeout(()=> refreshIcons($('resetPasswordModal')), 10);
+  setTimeout(()=>{ const np=$('newPass'); if(np) np.focus(); }, 100);
+}
+
+async function submitNewPassword(){
+  const pass = $('newPass') ? $('newPass').value : '';
+  const confirm = $('confirmPass') ? $('confirmPass').value : '';
+  if(!pass || pass.length < 6){
+    toast('❌ Le mot de passe doit contenir au moins 6 caractères', 'err');
+    return;
+  }
+  if(pass !== confirm){
+    toast('❌ Les deux mots de passe ne correspondent pas', 'err');
+    return;
+  }
+  const btn = $('resetSubmitBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+
+  try {
+    const { data, error } = await sb.auth.updateUser({ password: pass });
+    if(error){
+      toast('❌ Erreur : ' + error.message, 'err');
+      if(btn){ btn.disabled = false; btn.textContent = 'Enregistrer le nouveau mot de passe'; }
+      return;
+    }
+
+    closeModal('resetPasswordModal');
+    if(window.location.hash) {
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+    toast('✅ Mot de passe mis à jour avec succès !', 'ok');
+    if(data?.user){
+      currentUser = data.user;
+      handleLoginSuccess(currentUser.email);
+    }
+  } catch(e) {
+    console.error('updateUser password error', e);
+    toast('❌ Erreur lors de la mise à jour', 'err');
+    if(btn){ btn.disabled = false; btn.textContent = 'Enregistrer le nouveau mot de passe'; }
+  }
+}
+
+async function submitClientAuth(){
+  const email=$('clientEmail').value;
+  const password=$('clientPass').value;
+  if(email.trim()==='' || !email.includes('@')){
+    toast('❌ Veuillez entrer un e-mail valide','err');
+    return;
+  }
+  if(!password || password.length < 6){
+    toast('❌ Mot de passe trop court (6 min.)','err');
+    return;
+  }
+  
+  toast('⏳ Connexion en cours...', 'ok');
+  let { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    if(error.message && error.message.toLowerCase().includes('email not confirmed')){
+      toast('📧 Confirmez votre e-mail (lien reçu à l\'inscription) avant de vous connecter.','err');
+      return;
+    }
+    let { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password });
+    if (signUpError) {
+      toast('❌ Erreur: ' + signUpError.message, 'err');
+      return;
+    }
+    if(!signUpData.session){
+      toast('✅ Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.', 'ok');
+      return;
+    }
+    data = signUpData;
+    toast('✅ Compte créé avec succès !', 'ok');
+  }
+
+  currentUser = data.user;
+  handleLoginSuccess(currentUser.email);
+}
+
+function handleLoginSuccess(email) {
+  clientAuth=true;
+  $('clientAuthLabel').innerText='Mon compte';
+  
+  const icon = document.createElement('i');
+  icon.setAttribute('data-lucide', 'user-check');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.id = 'clientAuthIcon';
+  $('clientAuthIcon').replaceWith(icon);
+  refreshIcons(document.querySelector('.topbar'));
+  
+  if($('clientEmailDisplay')) $('clientEmailDisplay').innerText = email;
+
+  closeModal('clientAuthModal');
+  toast('👋 Bienvenue, ' + email, 'ok');
+  
+  loadUserData();
+  
+  if(pendingView){
+    showView(pendingView);
+    pendingView=null;
+  } else if ($('clientAuthModal').classList.contains('open')) {
+    showView('client');
+  }
+}
+
+async function clientLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  clientAuth = false;
+  $('clientAuthLabel').innerText = 'Se connecter';
+  const icon = document.createElement('i');
+  icon.setAttribute('data-lucide', 'user');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.id = 'clientAuthIcon';
+  $('clientAuthIcon').replaceWith(icon);
+  refreshIcons(document.querySelector('.topbar'));
+  
+  favorites.clear();
+  credits = 0;
+  updateCreditsUI();
+  
+  showView('home');
+  toast('Vous avez été déconnecté.', 'ok');
+}
+
+async function loadUserData() {
+  if(!currentUser) return;
+  const { data: profile } = await sb.from('profiles').select('credits').eq('id', currentUser.id).single();
+  if (profile) {
+    credits = profile.credits;
+    updateCreditsUI();
+  } else {
+    credits = 20;
+    updateCreditsUI();
+    const { error: insertError } = await sb.from('profiles').insert({ id: currentUser.id, credits: 20 });
+    if(insertError) console.error('profiles insert', insertError);
+  }
+  
+  const { data: favs } = await sb.from('favorites').select('permit_id').eq('user_id', currentUser.id);
+  favorites.clear();
+  if (favs) favs.forEach(f => favorites.add(f.permit_id));
+  
+  if ($('view-client').classList.contains('active')) renderClientDashboard();
+  renderFavs();
+}
+
+async function saveUserCredits(newCredits) {
+  credits = newCredits;
+  updateCreditsUI();
+  if(currentUser) {
+    const { error } = await sb.from('profiles').upsert({ id: currentUser.id, credits });
+    if(error) console.error('profiles upsert', error);
+  }
+}
+
+
+function renderClientDashboard() {
+  const creditDisplay=$('clientCreditsDisplay');
+  if(creditDisplay)creditDisplay.textContent=fmtNum(credits);
+
+  const statusClass=etat=>etat==='Accordé'?'acc':etat==='Refusé'?'ref':'enc';
+  const openFromClient=id=>`showView('search');setTimeout(()=>openDetail('${esc(id).replace(/'/g,"\\'")}'),300)`;
+  const activity=$('clientActivityWrap');
+  const activityCount=$('clientActivityCount');
+  const activityItems=[...unlocked].map(id=>permits.find(p=>p.id===id)).filter(Boolean).reverse().slice(0,4);
+  if(activityCount)activityCount.textContent=unlocked.size?`${fmtNum(unlocked.size)} fiche${unlocked.size>1?'s':''} déverrouillée${unlocked.size>1?'s':''}`:'Aucune fiche déverrouillée';
+  if(activity){
+    activity.innerHTML=activityItems.length?activityItems.map(p=>`
+      <button class="client-activity-row" type="button" onclick="${openFromClient(p.id)}" aria-label="Ouvrir la fiche ${esc(p.nom_dossier)}">
+        <span class="client-activity-icon"><i data-lucide="file-check-2" aria-hidden="true"></i></span>
+        <span class="client-activity-main"><strong>${esc(p.type_dossier||'Dossier d\'urbanisme')}</strong><small>${esc(p.adresse||p.nom_dossier||'Adresse non précisée')}</small></span>
+        <span class="badge ${statusClass(p.etat)}">${esc(p.etat||'—')}</span>
+        <span class="client-activity-date">${fmtDate(p.date_depot)}</span>
+        <span class="client-activity-action"><i data-lucide="arrow-up-right" aria-hidden="true"></i></span>
+      </button>`).join(''):`
+      <div class="client-inline-empty">
+        <i data-lucide="clock-3" aria-hidden="true"></i>
+        <div><strong>Aucune fiche consultée récemment</strong><p>Déverrouillez une fiche depuis la carte pour la retrouver rapidement ici.</p></div>
+      </div>`;
+    refreshIcons(activity);
+  }
+
+  const c=$('clientFavsWrap');
+  const favCount=$('clientFavCount');
+  const favs=permits.filter(p=>favorites.has(p.id));
+  if(favCount)favCount.textContent=favs.length?`${fmtNum(favs.length)} dossier${favs.length>1?'s':''}`:'Aucun dossier enregistré';
+  if(!c)return;
+  if(favs.length===0){
+    c.innerHTML=`<div class="client-empty-state">
+      <span class="client-empty-icon"><i data-lucide="star" aria-hidden="true"></i></span>
+      <div><strong>Votre sélection est encore vide</strong><p>Enregistrez les dossiers qui vous intéressent depuis leur fiche pour les comparer et les retrouver sans refaire la recherche.</p></div>
+      <button class="btn btn-ghost" type="button" onclick="showView('map')"><i data-lucide="map" aria-hidden="true"></i> Explorer la carte</button>
+    </div>`;
+  }else{
+    c.innerHTML=favs.map(p=>`
+      <article class="chart-card client-favorite-card">
+        <div>
+          <span class="client-favorite-title" title="${esc(p.nom_dossier)}">${esc(p.nom_dossier)}</span>
+          <span class="client-favorite-address" title="${esc(p.adresse||'Adresse non précisée')}">${esc(p.adresse||'Adresse non précisée')}</span>
+          <span class="badge ${statusClass(p.etat)}">${esc(p.etat||'—')}</span>
+        </div>
+        <div class="client-favorite-actions">
+          <button class="btn btn-primary" type="button" onclick="${openFromClient(p.id)}">Voir la fiche <i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" onclick="toggleFav('${esc(p.id).replace(/'/g,"\\'")}');setTimeout(()=>renderClientDashboard(),100)" title="Retirer des favoris" aria-label="Retirer ${esc(p.nom_dossier)} des favoris"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+        </div>
+      </article>`).join('');
+  }
+  refreshIcons(c);
+}
 
 /* ================= THÈME ================= */
 function toggleTheme(){
@@ -1304,9 +1829,17 @@ function renderFavs(){
       <button class="r-del" title="Retirer" onclick="event.stopPropagation();toggleFav('${esc(p.id).replace(/'/g,"\\'")}')">🗑️</button>
     </div>`).join('');
 }
-function toggleFav(id){
-  if(favorites.has(id)){favorites.delete(id);toast('Retiré de vos sélections')}
-  else{favorites.add(id);toast('⭐ Ajouté à vos sélections','ok')}
+async function toggleFav(id){
+  if(favorites.has(id)){
+    favorites.delete(id);
+    toast('Retiré de vos sélections');
+    if(currentUser) await sb.from('favorites').delete().match({ user_id: currentUser.id, permit_id: id });
+  }
+  else{
+    favorites.add(id);
+    toast('⭐ Ajouté à vos sélections','ok');
+    if(currentUser) await sb.from('favorites').insert({ user_id: currentUser.id, permit_id: id });
+  }
   saveState();renderFavs();
   if(currentDetail===id)openDetail(id,detailTab);
 }
@@ -1477,6 +2010,7 @@ function openDetail(id,tab){
   }
   if(!$('view-map').classList.contains('active'))showView('map');
 }
+function toggleSidebar(){$('sidebar').classList.toggle('open');refreshIcons($('sidebar'))}
 function closeDetail(){$('detailPanel').classList.remove('open');currentDetail=null}
 function unlockPermit(id){
   if(unlocked.has(id)){openDetail(id,detailTab);return}
@@ -1484,7 +2018,7 @@ function unlockPermit(id){
     toast('❌ Crédits insuffisants — rechargez votre compte','err');
     openCreditsModal();return;
   }
-  credits-=1;unlocked.add(id);saveState();updateCreditsUI();
+  saveUserCredits(credits - 1);unlocked.add(id);saveState();
   toast('🔓 Fiche débloquée · −1 crédit','ok');
   openDetail(id,detailTab);
 }
@@ -1607,6 +2141,7 @@ function makeChart(id,type,data,opts){
 }
 
 /* ================= CRÉDITS & STRIPE (PAIEMENT RÉEL — PAYMENT LINKS) ================= */
+
 function openCreditsModal(){$('creditsModal').classList.add('open')}
 function closeModal(id){$(id).classList.remove('open')}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
@@ -1614,6 +2149,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 async function openCheckout(packId){
   if(!currentUser){
     toast('❌ Vous devez être connecté pour acheter des crédits','err');
+    openClientAuthModal();
     return;
   }
   pendingCheckout=packId;
@@ -1637,6 +2173,7 @@ function redirectToStripe(){
   const pack=PACKS[pendingCheckout];
   const btn=$('payBtn');
   btn.disabled=true;btn.textContent='Redirection en cours…';
+  // Construire l'URL du Payment Link avec l'ID utilisateur pour le webhook
   const url = new URL(pack.stripeLink);
   url.searchParams.set('client_reference_id', currentUser.id);
   if(currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
@@ -1650,9 +2187,9 @@ async function handlePaymentReturn(){
   if(paymentStatus==='success'){
     window.history.replaceState({},'',window.location.pathname);
     if(currentUser){
+      // Attendre un court instant pour laisser le webhook créditer
       await new Promise(r=>setTimeout(r,2000));
-      const { data: profile } = await sb.from('profiles').select('credits').eq('id', currentUser.id).single();
-      if(profile) { credits = profile.credits; updateCreditsUI(); }
+      await loadUserData();
       toast('✅ Paiement confirmé ! Vos crédits ont été mis à jour.','ok');
       $('checkoutBody').innerHTML=`
         <div class="success-anim">
@@ -1678,10 +2215,9 @@ function renderAdmin(){
         <div class="login-box">
           <h2>🔐 Administration</h2>
           <div class="sub">Accès réservé aux gestionnaires de la plateforme.</div>
-          <input type="text" id="admUser" placeholder="Identifiant" value="">
+          <input type="email" id="admUser" placeholder="Adresse e-mail" value="">
           <input type="password" id="admPass" placeholder="Mot de passe" value="">
           <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Se connecter</button>
-          <div class="hint">Démo : identifiant <b>admin</b> · mot de passe <b>demo</b></div>
         </div>
       </div></div>`;
     return;
@@ -1692,7 +2228,8 @@ function renderAdmin(){
     ['users','👥 Utilisateurs'],
     ['reports','📊 Rapports'],
     ['filters','🎛️ Filtres de la carte'],
-    ['moderation','💬 Modération']
+    ['moderation','💬 Modération'],
+    ['stripe','💳 Paiements Stripe']
   ];
   v.innerHTML=`
     <div class="admin-layout">
@@ -1707,9 +2244,11 @@ function renderAdmin(){
   renderAdminTab();
   refreshIcons(v);
 }
+const ADMIN_EMAIL='teddycoronak@gmail.com';
+const ADMIN_PASSWORD='Admin147852@';
 function adminLogin(){
-  if($('admUser').value==='admin'&&$('admPass').value==='demo'){adminAuth=true;toast('👋 Bienvenue dans le back-office','ok');renderAdmin()}
-  else toast('❌ Identifiants incorrects (essayez admin / demo)','err');
+  if($('admUser').value.trim().toLowerCase()===ADMIN_EMAIL&&$('admPass').value===ADMIN_PASSWORD){adminAuth=true;toast('👋 Bienvenue dans le back-office','ok');renderAdmin()}
+  else toast('❌ Identifiants incorrects','err');
 }
 function renderAdminTab(){
   const c=$('adminContent');
@@ -1782,6 +2321,23 @@ function renderAdminTab(){
         <button class="btn btn-ghost" style="margin-top:14px" onclick="toast('💬 Espace participatif — à activer dans la version connectée au backend')">Activer l'espace participatif</button>
       </div>`;
   }
+  if(adminTab==='stripe'){
+    c.innerHTML=`
+      <div class="section-title">Configuration Stripe</div>
+      <div class="chart-card" style="max-width:500px">
+        <h3 style="margin-bottom:8px">Paramètres de paiement</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:18px">Entrez vos clés API pour pouvoir encaisser les paiements (achat de crédits, abonnements).</p>
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Clé Publique (Publishable key)</label>
+          <input type="text" id="stripePubKey" placeholder="pk_..." style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div style="margin-bottom:18px">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Clé Secrète (Secret key)</label>
+          <input type="password" id="stripeSecKey" placeholder="sk_..." style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="toast('💾 Configuration Stripe enregistrée','ok')">Enregistrer les clés</button>
+      </div>`;
+  }
   refreshIcons(c);
 }
 function adminDelete(id){
@@ -1832,11 +2388,34 @@ updateCreditsUI();
   // 3. Chargement des données (avec repli hors-ligne intégré)
   loadData();
   
-  // 4. Check Supabase session & handle Stripe return
+  // 4. Écouter les événements Auth Supabase (ex: lien de récupération de mot de passe)
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      openResetPasswordModal();
+    } else if (event === 'SIGNED_IN' && session) {
+      if (!currentUser || currentUser.id !== session.user.id) {
+        currentUser = session.user;
+        handleLoginSuccess(currentUser.email);
+      }
+    }
+  });
+
+  // Détection directe du token de récupération dans le hash ou la query de l'URL
+  try {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const queryParams = new URLSearchParams(window.location.search);
+    if (hashParams.get('type') === 'recovery' || queryParams.get('type') === 'recovery') {
+      setTimeout(() => openResetPasswordModal(), 300);
+    }
+  } catch(e){}
+
+  // 5. Check Supabase session
   sb.auth.getSession().then(({ data: { session } }) => {
     if (session) {
       currentUser = session.user;
+      handleLoginSuccess(currentUser.email);
     }
+    // 6. Gérer le retour après paiement Stripe
     handlePaymentReturn();
   });
 })();

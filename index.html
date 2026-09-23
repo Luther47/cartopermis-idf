@@ -1181,11 +1181,57 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
       <input type="email" id="clientEmail" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
     </div>
     <div style="margin-bottom:20px">
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Mot de passe</label>
-      <input type="password" id="clientPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label style="font-size:12px;font-weight:700;color:var(--text2)">Mot de passe</label>
+        <a href="javascript:void(0)" onclick="openForgotPasswordModal()" style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none">Mot de passe oublié ?</a>
+      </div>
+      <input type="password" id="clientPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitClientAuth()">
     </div>
     <button class="btn btn-primary" style="width:100%;font-size:14px;padding:12px" onclick="submitClientAuth()">S'inscrire / Se connecter</button>
     <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:14px">Authentification sécurisée par Supabase.</p>
+  </div>
+</div>
+
+<!-- ===== MODAL MOT DE PASSE OUBLIÉ ===== -->
+<div class="modal-overlay" id="forgotPasswordModal">
+  <div class="modal" style="max-width:400px">
+    <button class="icon-btn m-close" onclick="closeModal('forgotPasswordModal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:50px;height:50px;background:var(--accent-soft);color:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px"><i data-lucide="key-round"></i></div>
+      <h2 style="font-size:19px;font-weight:800">Mot de passe oublié</h2>
+      <p style="font-size:13px;color:var(--text2);margin-top:4px">Entrez votre adresse e-mail. Vous recevrez un lien gratuit pour réinitialiser votre mot de passe.</p>
+    </div>
+    <div id="forgotPasswordContent">
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Votre adresse e-mail</label>
+        <input type="email" id="forgotEmail" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitForgotPassword()">
+      </div>
+      <button class="btn btn-primary" id="forgotSubmitBtn" style="width:100%;font-size:14px;padding:12px" onclick="submitForgotPassword()">Envoyer le lien de réinitialisation</button>
+      <div style="text-align:center;margin-top:14px">
+        <a href="javascript:void(0)" onclick="closeModal('forgotPasswordModal');openClientAuthModal();" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">← Retour à la connexion</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL NOUVEAU MOT DE PASSE ===== -->
+<div class="modal-overlay" id="resetPasswordModal">
+  <div class="modal" style="max-width:400px">
+    <button class="icon-btn m-close" onclick="closeModal('resetPasswordModal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:50px;height:50px;background:var(--accent-soft);color:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px"><i data-lucide="shield-check"></i></div>
+      <h2 style="font-size:19px;font-weight:800">Nouveau mot de passe</h2>
+      <p style="font-size:13px;color:var(--text2);margin-top:4px">Choisissez votre nouveau mot de passe sécurisé.</p>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Nouveau mot de passe (6 car. min.)</label>
+      <input type="password" id="newPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Confirmer le nouveau mot de passe</label>
+      <input type="password" id="confirmPass" placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitNewPassword()">
+    </div>
+    <button class="btn btn-primary" id="resetSubmitBtn" style="width:100%;font-size:14px;padding:12px" onclick="submitNewPassword()">Enregistrer le mot de passe</button>
   </div>
 </div>
 
@@ -1318,6 +1364,112 @@ function openClientAuthModal(){
   $('clientPass').value='';
   $('clientAuthModal').classList.add('open');
   setTimeout(()=> refreshIcons($('clientAuthModal')), 10);
+}
+
+function openForgotPasswordModal(){
+  closeModal('clientAuthModal');
+  const existingEmail = $('clientEmail') ? $('clientEmail').value.trim() : '';
+  $('forgotPasswordContent').innerHTML = `
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Votre adresse e-mail</label>
+      <input type="email" id="forgotEmail" value="${esc(existingEmail)}" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitForgotPassword()">
+    </div>
+    <button class="btn btn-primary" id="forgotSubmitBtn" style="width:100%;font-size:14px;padding:12px" onclick="submitForgotPassword()">Envoyer le lien de réinitialisation</button>
+    <div style="text-align:center;margin-top:14px">
+      <a href="javascript:void(0)" onclick="closeModal('forgotPasswordModal');openClientAuthModal();" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">← Retour à la connexion</a>
+    </div>
+  `;
+  $('forgotPasswordModal').classList.add('open');
+  setTimeout(()=> refreshIcons($('forgotPasswordModal')), 10);
+  setTimeout(()=>{ const fe=$('forgotEmail'); if(fe) fe.focus(); }, 100);
+}
+
+async function submitForgotPassword(){
+  const email = $('forgotEmail') ? $('forgotEmail').value.trim() : '';
+  if(!email || !email.includes('@')){
+    toast('❌ Veuillez entrer une adresse e-mail valide', 'err');
+    return;
+  }
+  const btn = $('forgotSubmitBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+
+  try {
+    const redirectUrl = window.location.origin + window.location.pathname;
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+
+    if(error){
+      toast('❌ Erreur : ' + error.message, 'err');
+      if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+      return;
+    }
+
+    $('forgotPasswordContent').innerHTML = `
+      <div style="text-align:center;padding:10px 0">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--green-soft);color:var(--green-text);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px"><i data-lucide="mail-check"></i></div>
+        <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">E-mail envoyé avec succès !</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:18px">
+          Un lien gratuit de réinitialisation a été envoyé à <b>${esc(email)}</b>.<br>
+          Consultez votre boîte mail et cliquez sur le lien pour choisir un nouveau mot de passe.<br>
+          <span style="font-size:11.5px;color:var(--text3);display:inline-block;margin-top:6px">(Pensez à vérifier votre dossier spams)</span>
+        </p>
+        <button class="btn btn-primary" style="width:100%;padding:11px" onclick="closeModal('forgotPasswordModal')">J'ai compris</button>
+      </div>
+    `;
+    refreshIcons($('forgotPasswordContent'));
+    toast('📧 Lien de réinitialisation envoyé !', 'ok');
+  } catch(e) {
+    console.error('resetPasswordForEmail error', e);
+    toast('❌ Une erreur est survenue lors de l\'envoi', 'err');
+    if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+  }
+}
+
+function openResetPasswordModal(){
+  if($('newPass')) $('newPass').value = '';
+  if($('confirmPass')) $('confirmPass').value = '';
+  $('resetPasswordModal').classList.add('open');
+  setTimeout(()=> refreshIcons($('resetPasswordModal')), 10);
+  setTimeout(()=>{ const np=$('newPass'); if(np) np.focus(); }, 100);
+}
+
+async function submitNewPassword(){
+  const pass = $('newPass') ? $('newPass').value : '';
+  const confirm = $('confirmPass') ? $('confirmPass').value : '';
+  if(!pass || pass.length < 6){
+    toast('❌ Le mot de passe doit contenir au moins 6 caractères', 'err');
+    return;
+  }
+  if(pass !== confirm){
+    toast('❌ Les deux mots de passe ne correspondent pas', 'err');
+    return;
+  }
+  const btn = $('resetSubmitBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+
+  try {
+    const { data, error } = await sb.auth.updateUser({ password: pass });
+    if(error){
+      toast('❌ Erreur : ' + error.message, 'err');
+      if(btn){ btn.disabled = false; btn.textContent = 'Enregistrer le nouveau mot de passe'; }
+      return;
+    }
+
+    closeModal('resetPasswordModal');
+    if(window.location.hash) {
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+    toast('✅ Mot de passe mis à jour avec succès !', 'ok');
+    if(data?.user){
+      currentUser = data.user;
+      handleLoginSuccess(currentUser.email);
+    }
+  } catch(e) {
+    console.error('updateUser password error', e);
+    toast('❌ Erreur lors de la mise à jour', 'err');
+    if(btn){ btn.disabled = false; btn.textContent = 'Enregistrer le nouveau mot de passe'; }
+  }
 }
 
 async function submitClientAuth(){
@@ -2236,13 +2388,34 @@ updateCreditsUI();
   // 3. Chargement des données (avec repli hors-ligne intégré)
   loadData();
   
-  // 4. Check Supabase session
+  // 4. Écouter les événements Auth Supabase (ex: lien de récupération de mot de passe)
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      openResetPasswordModal();
+    } else if (event === 'SIGNED_IN' && session) {
+      if (!currentUser || currentUser.id !== session.user.id) {
+        currentUser = session.user;
+        handleLoginSuccess(currentUser.email);
+      }
+    }
+  });
+
+  // Détection directe du token de récupération dans le hash ou la query de l'URL
+  try {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const queryParams = new URLSearchParams(window.location.search);
+    if (hashParams.get('type') === 'recovery' || queryParams.get('type') === 'recovery') {
+      setTimeout(() => openResetPasswordModal(), 300);
+    }
+  } catch(e){}
+
+  // 5. Check Supabase session
   sb.auth.getSession().then(({ data: { session } }) => {
     if (session) {
       currentUser = session.user;
       handleLoginSuccess(currentUser.email);
     }
-    // 5. Gérer le retour après paiement Stripe
+    // 6. Gérer le retour après paiement Stripe
     handlePaymentReturn();
   });
 })();

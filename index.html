@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
   --bg:#f4f5fb; --panel:#ffffff; --panel2:#f8f8fd; --border:#e7e8f2;
@@ -1635,8 +1636,10 @@ function renderClientDashboard() {
         <span class="client-activity-icon"><i data-lucide="file-check-2" aria-hidden="true"></i></span>
         <span class="client-activity-main"><strong>${esc(p.type_dossier||'Dossier d\'urbanisme')}</strong><small>${esc(p.adresse||p.nom_dossier||'Adresse non précisée')}</small></span>
         <span class="badge ${statusClass(p.etat)}">${esc(p.etat||'—')}</span>
-        <span class="client-activity-date">${fmtDate(p.date_depot)}</span>
-        <span class="client-activity-action"><i data-lucide="arrow-up-right" aria-hidden="true"></i></span>
+        <span class="client-activity-action" style="display:flex;align-items:center;gap:6px">
+          <button class="icon-btn" style="width:28px;height:28px;color:var(--green-text)" type="button" onclick="event.stopPropagation();downloadPermitPDF('${esc(p.id).replace(/'/g,"\\'")}')" title="Télécharger en format PDF" aria-label="Télécharger en PDF"><i data-lucide="file-down" aria-hidden="true"></i></button>
+          <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+        </span>
       </button>`).join(''):`
       <div class="client-inline-empty">
         <i data-lucide="clock-3" aria-hidden="true"></i>
@@ -2011,11 +2014,18 @@ function openDetail(id,tab){
   const badge=p.etat==='Accordé'?`<span class="badge acc">${ico('circle-check')} Accordé</span>`:p.etat==='Refusé'?`<span class="badge ref">${ico('circle-x')} Refusé</span>`:`<span class="badge enc">${ico('clock-3')} En instruction</span>`;
   const favIcon=ico('star');
   const idEsc=esc(id).replace(/'/g,"\\'");
+  const isUnlocked=unlocked.has(id);
   $('detailContent').innerHTML=`
     <div class="dp-card">
       <div class="dp-ref-row"><span class="dp-ref">${esc(p.nom_dossier)}</span>${badge}</div>
       <div class="dp-title">${esc(p.type_dossier||'Dossier d\'urbanisme')}</div>
       <div class="dp-addr">${ico('map-pin')} <span>${esc(p.adresse||'Adresse non précisée')}</span></div>
+      ${isUnlocked ? `
+      <div style="margin: 11px 0 3px 0;">
+        <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);border-color:#059669;box-shadow:0 4px 14px rgba(16,185,129,.28);font-size:13px;padding:10px 14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="downloadPermitPDF('${idEsc}')">
+          <i data-lucide="file-down" aria-hidden="true"></i> Télécharger la fiche en PDF
+        </button>
+      </div>` : ''}
       <div class="dp-tabs">
         <button class="${detailTab==='general'?'active':''}" onclick="openDetail('${idEsc}','general')">Général</button>
         <button class="${detailTab==='details'?'active':''}" onclick="openDetail('${idEsc}','details')">Détails</button>
@@ -2024,6 +2034,7 @@ function openDetail(id,tab){
       <div id="dpBody">${renderDetailBody(p)}</div>
       <div class="dp-actions">
         <button class="btn btn-primary" onclick="focusPermit('${idEsc}')"><i data-lucide="map" aria-hidden="true"></i> Voir sur la carte</button>
+        ${isUnlocked ? `<button class="btn btn-ghost" style="color:var(--green-text);font-weight:700" onclick="downloadPermitPDF('${idEsc}')" title="Télécharger la fiche en PDF"><i data-lucide="file-down" aria-hidden="true"></i> PDF</button>` : ''}
         <button class="btn btn-ghost fav-btn ${favorites.has(id)?'faved':''}" onclick="toggleFav('${idEsc}')">${favIcon} Favori</button>
         <button class="btn btn-ghost" title="Partager" aria-label="Partager" onclick="sharePermit('${idEsc}')"><i data-lucide="share-2" aria-hidden="true"></i></button>
       </div>
@@ -2061,6 +2072,263 @@ function sharePermit(id){
   const txt=`${p.nom_dossier} — ${p.type_dossier} · ${p.adresse} (via CartoPermis IDF)`;
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast('🔗 Lien de partage copié !','ok')).catch(()=>toast(txt))}
   else toast(txt);
+}
+
+/* ================= EXPORT PDF FICHE DÉBLOQUÉE ================= */
+function generatePermitPDFHTML(p){
+  const en=enrichCache[p.id]||{};
+  const ref=parseRef(p.nom_dossier);
+  const mairie=mairieInfo(p.commune);
+  const delai=joursEntre(p.date_depot,p.date_decision);
+  const moyen=delaiMoyenArr(p.commune);
+  
+  let stColor='#10b981',stBg='#ecfdf5',stBorder='#a7f3d0',stIco='✓';
+  if(p.etat==='Refusé'){
+    stColor='#ef4444';stBg='#fef2f2';stBorder='#fecaca';stIco='✕';
+  } else if(p.etat!=='Accordé'){
+    stColor='#f59e0b';stBg='#fffbeb';stBorder='#fde68a';stIco='⏳';
+  }
+
+  const exportDate=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+
+  return `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;color:#1e2130;background:#ffffff;padding:28px 32px;max-width:760px;margin:0 auto;box-sizing:border-box;line-height:1.45">
+    
+    <!-- En-tête officiel CartoPermis IDF -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #6d4df6;padding-bottom:14px;margin-bottom:18px">
+      <div>
+        <div style="font-size:20px;font-weight:800;color:#6d4df6;display:flex;align-items:center;gap:6px">
+          <span>🗺️</span> <span>CartoPermis IDF</span>
+        </div>
+        <div style="font-size:10.5px;font-weight:700;color:#8e93a7;text-transform:uppercase;margin-top:3px;letter-spacing:0.5px">
+          Fiche de synthèse d'urbanisme &amp; Permis de construire · Île-de-France
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;font-weight:800;color:#1e2130">Fiche certifiée débloquée</div>
+        <div style="font-size:10.5px;color:#6b7089;margin-top:2px">Exporté le ${exportDate}</div>
+        <div style="font-size:10.5px;color:#6d4df6;font-weight:700;margin-top:2px">cartopermis-idf.vercel.app</div>
+      </div>
+    </div>
+
+    <!-- Bannière référence & statut -->
+    <div style="background:#f8f9fe;border:1px solid #e7e8f2;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:#8e93a7;margin-bottom:2px">Référence du dossier</div>
+        <div style="font-size:20px;font-weight:800;color:#1e2130;letter-spacing:-0.4px">${esc(p.nom_dossier)}</div>
+        <div style="font-size:13px;font-weight:700;color:#6d4df6;margin-top:2px">${esc(p.type_dossier||'Dossier d\'urbanisme')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="display:inline-block;padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:800;color:${stColor};background:${stBg};border:1px solid ${stBorder}">
+          ${stIco} ${esc(p.etat||'En instruction')}
+        </div>
+        <div style="font-size:11px;color:#6b7089;margin-top:5px">
+          ${p.date_decision?'Date de décision : '+fmtDate(p.date_decision):'Déposé le '+fmtDate(p.date_depot)}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1 : Identification du projet -->
+    <div style="margin-bottom:16px;border:1px solid #e7e8f2;border-radius:10px;overflow:hidden">
+      <div style="background:#f4f5fb;padding:9px 16px;font-size:12px;font-weight:800;color:#1e2130;border-bottom:1px solid #e7e8f2">
+        📋 Identification du projet &amp; Demandeur
+      </div>
+      <div style="padding:14px 16px">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <tr>
+            <td style="padding:5px 0;width:38%;color:#6b7089;font-weight:600">Demandeur / Maître d'ouvrage :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${esc(p.demandeur||'Non communiqué')}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Type de dossier :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${esc(p.type_dossier||'—')}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Date de dépôt :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${fmtDate(p.date_depot)}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Date de décision :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${p.date_decision?fmtDate(p.date_decision):'En cours d\'instruction'}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Type de décision :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${esc(p.type_decision||'En attente')}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 2 : Localisation & Cadastre -->
+    <div style="margin-bottom:16px;border:1px solid #e7e8f2;border-radius:10px;overflow:hidden">
+      <div style="background:#f4f5fb;padding:9px 16px;font-size:12px;font-weight:800;color:#1e2130;border-bottom:1px solid #e7e8f2">
+        📍 Localisation &amp; Données cadastrales (IGN)
+      </div>
+      <div style="padding:14px 16px">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <tr>
+            <td style="padding:5px 0;width:38%;color:#6b7089;font-weight:600">Adresse du projet :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${esc(p.adresse||'Adresse non précisée')}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Arrondissement / Circonscription :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">Paris ${p.commune?p.commune+(p.commune===1?'er':'e'):'—'} · ${esc(p.circonscription||'—')}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Coordonnées GPS :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${p.geo_point_2d?p.geo_point_2d.lat.toFixed(6)+', '+p.geo_point_2d.lon.toFixed(6):'—'}</td>
+          </tr>
+          ${en&&en.parcelle?`
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Parcelle cadastrale (IGN) :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">Section <b>${esc(en.parcelle.section)}</b> · N° <b>${esc(en.parcelle.numero)}</b> ${en.parcelle.contenance?'('+fmtNum(en.parcelle.contenance)+' m²)':''}</td>
+          </tr>`:''}
+          ${mairie?`
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Service urbanisme compétent :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">${esc(mairie.nom)} (${mairie.tel})</td>
+          </tr>`:''}
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 3 : Objet & Programme des travaux -->
+    <div style="margin-bottom:16px;border:1px solid #e7e8f2;border-radius:10px;overflow:hidden">
+      <div style="background:#f4f5fb;padding:9px 16px;font-size:12px;font-weight:800;color:#1e2130;border-bottom:1px solid #e7e8f2">
+        🏗️ Objet des travaux &amp; Programme
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:11.5px;font-weight:700;color:#6b7089;margin-bottom:5px">Objet complet de la demande :</div>
+        <div style="font-size:12.5px;line-height:1.55;color:#1e2130;background:#fafbfe;padding:10px 12px;border-radius:8px;border:1px solid #edf0fa;margin-bottom:12px">
+          ${esc(p.objet||'Aucun objet détaillé fourni')}
+        </div>
+        <div style="font-size:11.5px;font-weight:700;color:#6b7089;margin-bottom:5px">Programme des surfaces &amp; aménagements :</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#1e2130">
+          ${esc(p.programme||'Non communiqué ou non applicable')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4 : Délais d'instruction -->
+    <div style="margin-bottom:20px;border:1px solid #e7e8f2;border-radius:10px;overflow:hidden">
+      <div style="background:#f4f5fb;padding:9px 16px;font-size:12px;font-weight:800;color:#1e2130;border-bottom:1px solid #e7e8f2">
+        ⏱️ Délais &amp; Analyse administrative
+      </div>
+      <div style="padding:14px 16px">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <tr>
+            <td style="padding:5px 0;width:38%;color:#6b7089;font-weight:600">Délai d'instruction :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">
+              ${delai!=null?delai+' jours entre le dépôt et la décision':'En cours d\'instruction'}
+            </td>
+          </tr>
+          ${moyen!=null?`
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Moyenne de l'arrondissement :</td>
+            <td style="padding:5px 0;font-weight:700;color:#1e2130">
+              ${moyen} jours ${delai!=null?(delai<=moyen?'(plus rapide que la moyenne)':'(plus long que la moyenne)'):''}
+            </td>
+          </tr>`:''}
+          ${ref?`
+          <tr>
+            <td style="padding:5px 0;color:#6b7089;font-weight:600">Structure de la référence :</td>
+            <td style="padding:5px 0;font-size:11.5px;color:#4a4e69">
+              Sigle : <b>${esc(ref.sigle)}</b> (${esc(ref.typeLabel)}) · Année : <b>${esc(ref.annee)}</b> · Ordre : <b>${esc(ref.numero)}</b>
+            </td>
+          </tr>`:''}
+        </table>
+      </div>
+    </div>
+
+    <!-- Pied de page -->
+    <div style="border-top:1px solid #e7e8f2;padding-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#8e93a7">
+      <div>
+        CartoPermis IDF · Données ouvertes d'urbanisme (Paris Data &amp; IGN)
+      </div>
+      <div>
+        Lien permanent : cartopermis-idf.vercel.app
+      </div>
+    </div>
+
+  </div>`;
+}
+
+async function downloadPermitPDF(id){
+  const p=permits.find(x=>x.id===id);
+  if(!p)return;
+  if(!unlocked.has(id)){
+    toast('❌ Veuillez débloquer la fiche pour la télécharger en PDF','err');
+    return;
+  }
+  toast('📄 Préparation du PDF en cours...','ok');
+
+  if(!enrichCache[id]){
+    try { await fetchEnrichment(p); } catch(e){}
+  }
+
+  const container=document.createElement('div');
+  container.style.position='fixed';
+  container.style.left='-9999px';
+  container.style.top='0';
+  container.style.width='760px';
+  container.style.background='#ffffff';
+  container.innerHTML=generatePermitPDFHTML(p);
+  document.body.appendChild(container);
+
+  const cleanRef=(p.nom_dossier||'dossier').replace(/[^a-zA-Z0-9_-]/g,'_');
+  const filename=`CartoPermis_${cleanRef}.pdf`;
+
+  if(window.html2pdf){
+    const opt={
+      margin:[8,8,8,8],
+      filename:filename,
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,logging:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    };
+    try {
+      await window.html2pdf().set(opt).from(container).save();
+      toast('✅ Fiche PDF téléchargée !','ok');
+    } catch(err){
+      console.warn('html2pdf fallback to print:',err);
+      printPermitFallback(p);
+    } finally {
+      if(container.parentNode)container.parentNode.removeChild(container);
+    }
+  } else {
+    if(container.parentNode)container.parentNode.removeChild(container);
+    printPermitFallback(p);
+  }
+}
+
+function printPermitFallback(p){
+  const w=window.open('','_blank');
+  if(!w){
+    toast('❌ Autorisez les popups pour télécharger la fiche en PDF','err');
+    return;
+  }
+  w.document.open();
+  w.document.write(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>CartoPermis IDF — ${esc(p.nom_dossier)}</title>
+  <style>
+    @page { size: A4 portrait; margin: 10mm; }
+    body { margin: 0; padding: 0; background: #fff; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+  ${generatePermitPDFHTML(p)}
+  <script>
+    window.onload = function() {
+      setTimeout(function(){ window.focus(); window.print(); }, 400);
+    };
+  <\/script>
+</body>
+</html>`);
+  w.document.close();
 }
 
 /* ================= ANNUAIRE / RECHERCHE ================= */

@@ -1010,19 +1010,26 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ================================================================
    CartoPermis IDF — prototype fonctionnel
    Données : API Paris Data (Opendatasoft explore v2.1)
-   Paiement : Stripe SIMULÉ (voir fonction payNow pour l'intégration réelle)
+   Paiement : Stripe Checkout (paiement réel)
    ================================================================ */
+
+const SUPABASE_URL = 'https://qodxbgbjbkkstndfhueo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Xvhx-Uo6ZnAENV7bGfmuPA_f8HRIDMR';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const STRIPE_CHECKOUT_URL = SUPABASE_URL + '/functions/v1/create-checkout-session';
+let currentUser = null;
 
 const API_BASE='https://parisdata.opendatasoft.com/api/explore/v2.1/catalog/datasets/dossiers-recents-durbanisme';
 const FIELDS='nom_dossier,type_dossier,demandeur,commune,adresse,objet,programme,date_depot,date_decision,etat,type_decision,circonscription,geo_point_2d';
 const PACKS={
-  decouverte:{name:'Pack Découverte',credits:100,price:9},
-  pro:{name:'Pack Pro',credits:500,price:39},
-  collectivite:{name:'Pack Collectivité',credits:2000,price:129}
+  decouverte:{name:'Pack Découverte',credits:100,price:9,stripeLink:'https://buy.stripe.com/5kQ6oH8fSd6S8v93vY9MY0i'},
+  pro:{name:'Pack Pro',credits:500,price:39,stripeLink:'https://buy.stripe.com/7sY14n8fSgj426LfeG9MY0j'},
+  collectivite:{name:'Pack Collectivité',credits:2000,price:129,stripeLink:'https://buy.stripe.com/fZubJ153GaYKeTx0jM9MY0k'}
 };
 
 /* --- stockage sûr (fallback mémoire si localStorage indisponible) --- */
@@ -1599,63 +1606,67 @@ function makeChart(id,type,data,opts){
   charts[id]=new Chart($(id),{type,data,options:{responsive:true,maintainAspectRatio:false,...opts}});
 }
 
-/* ================= CRÉDITS & STRIPE (SIMULÉ) ================= */
+/* ================= CRÉDITS & STRIPE (PAIEMENT RÉEL — PAYMENT LINKS) ================= */
 function openCreditsModal(){$('creditsModal').classList.add('open')}
 function closeModal(id){$(id).classList.remove('open')}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 
-function openCheckout(packId){
+async function openCheckout(packId){
+  if(!currentUser){
+    toast('❌ Vous devez être connecté pour acheter des crédits','err');
+    return;
+  }
   pendingCheckout=packId;
   const pack=PACKS[packId];
   closeModal('creditsModal');
   $('checkoutBody').innerHTML=`
     <h2>💳 Paiement sécurisé</h2>
     <div class="m-sub">Finalisez votre achat de crédits CartoPermis IDF.</div>
-    <div class="demo-note">🧪 <b>Mode démonstration</b> — aucun paiement réel n'est effectué. En production, ce formulaire est remplacé par Stripe Checkout / Payment Element (voir le code source, fonction <code>payNow</code>).</div>
     <div class="stripe-form" style="max-width:100%">
       <div class="stripe-head"><div><div class="sh-pack">${pack.name}</div><div style="font-size:12px;color:var(--text3)">${fmtNum(pack.credits)} crédits</div></div><div class="sh-price">${pack.price} €</div></div>
-      <div class="stripe-field"><label>E-mail</label><input type="email" id="ckEmail" placeholder="vous@exemple.fr" value=""></div>
-      <div class="stripe-field"><label>Numéro de carte</label><input type="text" id="ckCard" placeholder="4242 4242 4242 4242" maxlength="19" inputmode="numeric"></div>
-      <div class="stripe-row">
-        <div class="stripe-field"><label>Expiration</label><input type="text" id="ckExp" placeholder="MM / AA" maxlength="7"></div>
-        <div class="stripe-field"><label>CVC</label><input type="text" id="ckCvc" placeholder="123" maxlength="4" inputmode="numeric"></div>
+      <div style="text-align:center;padding:24px 0">
+        <div style="margin-bottom:16px;font-size:13px;color:var(--text2)">Vous allez être redirigé vers la page de paiement sécurisée Stripe.</div>
+        <button class="stripe-pay" id="payBtn" onclick="redirectToStripe()">Payer ${pack.price},00 € via Stripe</button>
+        <div class="stripe-badge">🔒 Paiement sécurisé · Propulsé par <b>Stripe</b></div>
       </div>
-      <button class="stripe-pay" id="payBtn" onclick="payNow()">Payer ${pack.price},00 €</button>
-      <div class="stripe-badge">🔒 Paiement chiffré · Propulsé par <b>stripe</b></div>
     </div>`;
   $('checkoutModal').classList.add('open');
-  // formatage carte
-  setTimeout(()=>{
-    const card=$('ckCard');if(card)card.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim()});
-    const exp=$('ckExp');if(exp)exp.addEventListener('input',e=>{let v=e.target.value.replace(/\D/g,'').slice(0,4);if(v.length>2)v=v.slice(0,2)+' / '+v.slice(2);e.target.value=v});
-  },50);
 }
 
-/* En production, remplacer cette fonction par une redirection Stripe Checkout :
-   1. Backend : créer une session -> stripe.checkout.sessions.create({
-        mode:'payment',
-        line_items:[{price:PRICE_ID_DU_PACK, quantity:1}],
-        success_url:'https://votre-domaine.fr/merci?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url:'https://votre-domaine.fr/tarifs'})
-   2. Front : window.location = session.url
-   3. Webhook 'checkout.session.completed' -> créditer le compte utilisateur en base. */
-function payNow(){
+function redirectToStripe(){
   const pack=PACKS[pendingCheckout];
-  const card=($('ckCard').value||'').replace(/\s/g,'');
-  if(card.length<16){toast('❌ Numéro de carte incomplet (16 chiffres requis)','err');return}
-  if(!$('ckExp').value||($('ckCvc').value||'').length<3){toast('❌ Vérifiez la date d\'expiration et le CVC','err');return}
-  const btn=$('payBtn');btn.disabled=true;btn.textContent='Traitement en cours…';
-  setTimeout(()=>{
-    credits+=pack.credits;saveState();updateCreditsUI();
-    $('checkoutBody').innerHTML=`
-      <div class="success-anim">
-        <div class="check">✓</div>
-        <h2>Paiement confirmé !</h2>
-        <div class="m-sub" style="margin-top:8px">${fmtNum(pack.credits)} crédits ont été ajoutés à votre compte.<br>Nouveau solde : <b>${fmtNum(credits)} crédits</b></div>
-        <button class="btn btn-primary" onclick="closeModal('checkoutModal')">Continuer l'exploration</button>
-      </div>`;
-    toast(`✅ +${fmtNum(pack.credits)} crédits ajoutés`,'ok');
-  },1600);
+  const btn=$('payBtn');
+  btn.disabled=true;btn.textContent='Redirection en cours…';
+  const url = new URL(pack.stripeLink);
+  url.searchParams.set('client_reference_id', currentUser.id);
+  if(currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
+  window.location.href = url.toString();
+}
+
+/* Gestion du retour après paiement Stripe */
+async function handlePaymentReturn(){
+  const params=new URLSearchParams(window.location.search);
+  const paymentStatus=params.get('payment');
+  if(paymentStatus==='success'){
+    window.history.replaceState({},'',window.location.pathname);
+    if(currentUser){
+      await new Promise(r=>setTimeout(r,2000));
+      const { data: profile } = await sb.from('profiles').select('credits').eq('id', currentUser.id).single();
+      if(profile) { credits = profile.credits; updateCreditsUI(); }
+      toast('✅ Paiement confirmé ! Vos crédits ont été mis à jour.','ok');
+      $('checkoutBody').innerHTML=`
+        <div class="success-anim">
+          <div class="check">✓</div>
+          <h2>Paiement confirmé !</h2>
+          <div class="m-sub" style="margin-top:8px">Vos crédits ont été ajoutés à votre compte.<br>Nouveau solde : <b>${fmtNum(credits)} crédits</b></div>
+          <button class="btn btn-primary" onclick="closeModal('checkoutModal')">Continuer l'exploration</button>
+        </div>`;
+      $('checkoutModal').classList.add('open');
+    }
+  } else if(paymentStatus==='cancelled'){
+    window.history.replaceState({},'',window.location.pathname);
+    toast('⚠️ Paiement annulé — aucun montant n\'a été débité.','err');
+  }
 }
 
 /* ================= BACK-OFFICE ================= */
@@ -1820,6 +1831,14 @@ updateCreditsUI();
   }
   // 3. Chargement des données (avec repli hors-ligne intégré)
   loadData();
+  
+  // 4. Check Supabase session & handle Stripe return
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+      currentUser = session.user;
+    }
+    handlePaymentReturn();
+  });
 })();
 </script>
 </body>

@@ -1370,6 +1370,7 @@ function openForgotPasswordModal(){
   closeModal('clientAuthModal');
   const existingEmail = $('clientEmail') ? $('clientEmail').value.trim() : '';
   $('forgotPasswordContent').innerHTML = `
+    <div id="forgotError" style="display:none;margin-bottom:14px;padding:11px 14px;border-radius:10px;background:var(--red-soft);color:var(--red-text);font-size:12.5px;line-height:1.45;border:1px solid rgba(239,68,68,0.2)"></div>
     <div style="margin-bottom:18px">
       <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">Votre adresse e-mail</label>
       <input type="email" id="forgotEmail" value="${esc(existingEmail)}" placeholder="nom@exemple.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitForgotPassword()">
@@ -1386,22 +1387,50 @@ function openForgotPasswordModal(){
 
 async function submitForgotPassword(){
   const email = $('forgotEmail') ? $('forgotEmail').value.trim() : '';
+  const errDiv = $('forgotError');
+  const btn = $('forgotSubmitBtn');
+
+  if(errDiv) errDiv.style.display = 'none';
+
   if(!email || !email.includes('@')){
+    if(errDiv){
+      errDiv.innerHTML = '⚠️ Veuillez entrer une adresse e-mail valide.';
+      errDiv.style.display = 'block';
+    }
     toast('❌ Veuillez entrer une adresse e-mail valide', 'err');
     return;
   }
-  const btn = $('forgotSubmitBtn');
+  
   if(btn){ btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+
+  const showError = (htmlMsg, toastMsg) => {
+    if(errDiv){
+      errDiv.innerHTML = htmlMsg;
+      errDiv.style.display = 'block';
+    }
+    toast('❌ ' + (toastMsg || 'Erreur lors de l\'envoi'), 'err');
+    if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+  };
 
   try {
     const redirectUrl = window.location.origin + window.location.pathname;
-    const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl
-    });
+    
+    // Timeout de 7 secondes pour ne pas bloquer l'utilisateur si Supabase est hors-ligne
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('TIMEOUT')), 7000)
+    );
 
-    if(error){
-      toast('❌ Erreur : ' + error.message, 'err');
-      if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+    const callPromise = sb.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+    const res = await Promise.race([callPromise, timeoutPromise]);
+
+    if(res && res.error){
+      const err = res.error;
+      const msg = err.message || '';
+      if(msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')){
+        showError('<b>Serveur Supabase inaccessible.</b><br>Votre projet Supabase est probablement <b>en pause</b> (inactivité de +7 jours). Connectez-vous sur <a href="https://supabase.com/dashboard" target="_blank" style="color:inherit;font-weight:700;text-decoration:underline">supabase.com</a> et cliquez sur <b>« Restore project »</b> pour le réactiver.', 'Serveur Supabase inaccessible');
+      } else {
+        showError('<b>Erreur :</b> ' + esc(msg), msg);
+      }
       return;
     }
 
@@ -1421,8 +1450,12 @@ async function submitForgotPassword(){
     toast('📧 Lien de réinitialisation envoyé !', 'ok');
   } catch(e) {
     console.error('resetPasswordForEmail error', e);
-    toast('❌ Une erreur est survenue lors de l\'envoi', 'err');
-    if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le lien de réinitialisation'; }
+    const msg = e.message || '';
+    if(msg === 'TIMEOUT' || msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')){
+      showError('<b>Serveur Supabase inaccessible.</b><br>Votre instance Supabase (<code>qodxbgbjbkkstndfhueo</code>) ne répond pas. Votre projet est très probablement <b>en pause</b> sur <a href="https://supabase.com/dashboard" target="_blank" style="color:inherit;font-weight:700;text-decoration:underline">supabase.com</a>. Cliquez sur <b>« Restore / Unpause »</b> dans votre console Supabase pour le réveiller.', 'Serveur Supabase en pause ou inaccessible');
+    } else {
+      showError('<b>Erreur :</b> ' + esc(msg), msg);
+    }
   }
 }
 

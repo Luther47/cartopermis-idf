@@ -798,12 +798,298 @@ html.dark .toggle.on::after{background:#141414}
 html.dark .hero-map-summary,html.dark .hero-map-legend{background:rgba(20,20,20,.88);color:#c4c4c4;box-shadow:0 10px 24px rgba(0,0,0,.28)}
 html.dark .hero-map-surface::after{background:radial-gradient(circle at 78% 22%,rgba(255,255,255,.08),transparent 26%),linear-gradient(145deg,transparent 35%,rgba(255,255,255,.08) 35.2%,transparent 35.6%)}
 html.dark .modal-overlay{background:rgba(0,0,0,.72)}
-.mobile-filter-btn { display: none; margin-right: 12px; width: 36px; height: 36px; border-radius: 11px; background: var(--panel); border: 1.5px solid var(--border); color: var(--text); align-items: center; justify-content: center; cursor: pointer; }
-.mobile-close-sidebar { display: none; position: absolute; top: 12px; right: 12px; z-index: 100; background: var(--panel); border: 1.5px solid var(--border); border-radius: 50%; width: 32px; height: 32px; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
-@media(max-width:860px) {
+/* ===== MOBILE OPTIMIZATIONS ===== */
+.mobile-filter-btn {
+  display: none;
+  margin-right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--panel);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex: none;
+}
+.mobile-close-sidebar {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 100;
+  background: var(--panel);
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  touch-action: manipulation;
+}
+
+/* Bottom Bar Mobile Navigation */
+.mobile-nav {
+  display: none;
+}
+
+/* Dimmed backdrop overlay for mobile drawers & sheets */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 1100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.mobile-overlay.active {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media(max-width: 860px) {
+  /* Navigation mobile fixe au bas de l'écran */
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    z-index: 1150;
+    justify-content: space-around;
+    align-items: center;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    color: var(--text2);
+    background: transparent;
+    border: none;
+    font-size: 10.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: color 0.15s, transform 0.1s;
+    text-decoration: none;
+    padding: 0;
+  }
+  .mobile-nav-item i, .mobile-nav-item .lucide {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2px;
+  }
+  .mobile-nav-item:active {
+    transform: scale(0.92);
+  }
+  .mobile-nav-item.active {
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .mobile-nav-item.active i, .mobile-nav-item.active .lucide {
+    stroke-width: 2.3px;
+  }
+
+  /* Safe padding for pages so bottom elements are reachable above mobile-nav */
+  .page, .client-view > .page {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Sidebar Drawer on Mobile */
   .mobile-filter-btn { display: flex !important; }
-  .mobile-close-sidebar { display: flex; }
-  .sidebar { z-index: 2000; box-shadow: 4px 0 24px rgba(0,0,0,0.1); width: 300px; max-width: 85vw; }
+  .mobile-close-sidebar { display: flex !important; }
+  .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(340px, 86vw);
+    max-width: 86vw;
+    z-index: 1150 !important;
+    box-shadow: 14px 0 36px rgba(0,0,0,0.22);
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Map controls offset above mobile bottom bar */
+  .map-style-switch {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .leaflet-bottom.leaflet-right {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 12px !important;
+  }
+  .toast-wrap {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 14px;
+    right: 14px;
+  }
+}
+
+@media(max-width: 768px) {
+  /* Prevent iOS Safari auto-zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  button, a {
+    touch-action: manipulation;
+  }
+
+  /* Bottom Sheet for Permit Detail Panel */
+  .detail-panel {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-height: 84vh;
+    border-radius: 22px 22px 0 0;
+    border-top: 1.5px solid var(--border);
+    border-left: none !important;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.32);
+    z-index: 1200 !important;
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    display: flex !important;
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .detail-panel.open {
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .detail-head {
+    position: relative;
+    padding: 10px 16px 6px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  /* Drag handle indicator on bottom sheet */
+  .detail-head::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 42px;
+    height: 4.5px;
+    background: var(--text3);
+    border-radius: 999px;
+    opacity: 0.6;
+  }
+}
+
+@media(max-width: 620px) {
+  .topbar {
+    height: 56px;
+    min-height: 56px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .logo {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .logo-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+  .logo small {
+    display: none;
+  }
+  #clientAuthBtn {
+    display: none;
+  }
+  .credits-chip {
+    display: inline-flex !important;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    gap: 4px;
+  }
+  .topbar .btn-primary {
+    padding: 7px 11px;
+    font-size: 11.5px;
+    gap: 4px;
+  }
+  .hero h1 {
+    font-size: clamp(23px, 6.8vw, 32px) !important;
+    line-height: 1.25;
+    letter-spacing: -0.6px;
+  }
+  .hero p {
+    font-size: 13px !important;
+    line-height: 1.5;
+  }
+  .hero {
+    padding: 24px 18px 180px !important;
+  }
+  .hero button {
+    flex: 1 1 calc(50% - 6px);
+    font-size: 12.5px;
+    padding: 10px 12px;
+    justify-content: center;
+  }
+  .search-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .search-controls .search-box {
+    width: 100%;
+    min-width: 100%;
+  }
+  .search-controls select {
+    width: 100%;
+    min-width: 100%;
+  }
+  .result-card {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .pagination button {
+    min-width: 38px;
+    min-height: 38px;
+  }
+  .modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+  .modal {
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 16px;
+    margin: 0 auto;
+    width: 100%;
+  }
 }
 </style>
 </head>
@@ -1248,6 +1534,33 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- ===== NAVIGATION MOBILE (BOTTOM BAR) ===== -->
+<nav class="mobile-nav" id="mobileNav" aria-label="Navigation principale mobile">
+  <button class="mobile-nav-item active" data-view="home" onclick="showView('home')">
+    <i data-lucide="home" aria-hidden="true"></i>
+    <span>Accueil</span>
+  </button>
+  <button class="mobile-nav-item" data-view="map" onclick="showView('map')">
+    <i data-lucide="map" aria-hidden="true"></i>
+    <span>Carte</span>
+  </button>
+  <button class="mobile-nav-item" data-view="search" onclick="showView('search')">
+    <i data-lucide="search" aria-hidden="true"></i>
+    <span>Recherche</span>
+  </button>
+  <button class="mobile-nav-item" data-view="stats" onclick="showView('stats')">
+    <i data-lucide="bar-chart-3" aria-hidden="true"></i>
+    <span>Stats</span>
+  </button>
+  <button class="mobile-nav-item" data-view="client" onclick="handleMobileAccountNav()">
+    <i data-lucide="user" aria-hidden="true"></i>
+    <span id="mobileAccountLabel">Compte</span>
+  </button>
+</nav>
+
+<!-- Backdrop overlay pour fermer le volet des filtres et le détail sur mobile -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileDrawers()"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://qodxbgbjbkkstndfhueo.supabase.co';
@@ -1348,7 +1661,8 @@ function showView(v){
   }
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   $('view-'+v).classList.add('active');
-  document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('#mainNav button, .mobile-nav-item').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  closeMobileDrawers();
   if(v==='map'&&map){setTimeout(()=>map.invalidateSize(),80);setTimeout(()=>map.invalidateSize(),350)}
   if(v==='stats')renderStats();
   if(v==='search')renderDirectory();
@@ -1357,6 +1671,14 @@ function showView(v){
   refreshIcons($('view-'+v));
 }
 document.querySelectorAll('#mainNav button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+function handleMobileAccountNav(){
+  if(clientAuth){
+    showView('client');
+  } else {
+    openClientAuthModal();
+  }
+}
 
 function openClientAuthModal(){
   if(clientAuth) {
@@ -1548,6 +1870,7 @@ async function submitClientAuth(){
 function handleLoginSuccess(email) {
   clientAuth=true;
   $('clientAuthLabel').innerText='Mon compte';
+  if($('mobileAccountLabel')) $('mobileAccountLabel').innerText='Compte';
   
   const icon = document.createElement('i');
   icon.setAttribute('data-lucide', 'user-check');
@@ -1576,6 +1899,7 @@ async function clientLogout() {
   currentUser = null;
   clientAuth = false;
   $('clientAuthLabel').innerText = 'Se connecter';
+  if($('mobileAccountLabel')) $('mobileAccountLabel').innerText='Connexion';
   const icon = document.createElement('i');
   icon.setAttribute('data-lucide', 'user');
   icon.setAttribute('aria-hidden', 'true');
@@ -2012,6 +2336,7 @@ function openDetail(id,tab){
   const p=permits.find(x=>x.id===id);if(!p)return;
   currentDetail=id;detailTab=tab||'general';
   $('detailPanel').classList.add('open');
+  if(window.innerWidth<=768 && $('mobileOverlay')) $('mobileOverlay').classList.add('active');
   const badge=p.etat==='Accordé'?`<span class="badge acc">${ico('circle-check')} Accordé</span>`:p.etat==='Refusé'?`<span class="badge ref">${ico('circle-x')} Refusé</span>`:`<span class="badge enc">${ico('clock-3')} En instruction</span>`;
   const favIcon=ico('star');
   const idEsc=esc(id).replace(/'/g,"\\'");
@@ -2059,8 +2384,23 @@ function openDetail(id,tab){
   }
   if(!$('view-map').classList.contains('active'))showView('map');
 }
-function toggleSidebar(){$('sidebar').classList.toggle('open');refreshIcons($('sidebar'))}
-function closeDetail(){$('detailPanel').classList.remove('open');currentDetail=null}
+function toggleSidebar(){
+  const open=$('sidebar').classList.toggle('open');
+  if($('mobileOverlay')) $('mobileOverlay').classList.toggle('active',open);
+  refreshIcons($('sidebar'));
+}
+function closeDetail(){
+  $('detailPanel').classList.remove('open');
+  currentDetail=null;
+  if(!$('sidebar').classList.contains('open') && $('mobileOverlay')){
+    $('mobileOverlay').classList.remove('active');
+  }
+}
+function closeMobileDrawers(){
+  $('sidebar').classList.remove('open');
+  closeDetail();
+  if($('mobileOverlay')) $('mobileOverlay').classList.remove('active');
+}
 function unlockPermit(id){
   if(unlocked.has(id)){openDetail(id,detailTab);return}
   if(credits<1){
@@ -2445,7 +2785,7 @@ function renderDirectory(){
     <div class="result-card" onclick="openDetail('${esc(p.id).replace(/'/g,"\\'")}')">
       <span class="rc-dot" style="background:${statusColor(p.etat)}"></span>
       <div class="rc-main">
-        <div class="rc-title">${esc(p.type_dossier||'Dossier')} <span class="rc-ref">${esc(p.nom_dossier)}</span></div>
+        <div class="rc-title">${esc(p.type_dossier||'Dossier')} <span class="rc-ref">${unlocked.has(p.id) ? esc(p.nom_dossier) : '<span style="opacity:0.65">🔒</span>'}</span></div>
         <div class="rc-addr">${ico('map-pin')} ${esc(p.adresse||'—')}</div>
       </div>
       <span class="badge ${p.etat==='Accordé'?'acc':p.etat==='Refusé'?'ref':'enc'}">${esc(p.etat||'—')}</span>

@@ -1787,10 +1787,9 @@ function makeMarker(p){
   const c=statusColor(p.etat);
   const icon=L.divIcon({className:'',html:`<div class="pmarker" style="width:15px;height:15px;background:${c}"></div>`,iconSize:[15,15],iconAnchor:[8,8]});
   const m=L.marker([p.geo_point_2d.lat,p.geo_point_2d.lon],{icon});
-  if(labelsOn)m.bindTooltip(p.nom_dossier||'',{direction:'top',offset:[0,-8],opacity:.92});
+  if(labelsOn)m.bindTooltip(esc(p.type_dossier||'Dossier') + (p.adresse ? ' · ' + esc(p.adresse) : ''),{direction:'top',offset:[0,-8],opacity:.92});
   m.bindPopup(`
-    <span class="pop-ref">${esc(p.nom_dossier)}</span>
-    <div class="pop-title">${esc(p.type_dossier||'Dossier')}</div>
+    <div class="pop-title">${esc(p.type_dossier||'Dossier d\'urbanisme')}</div>
     <div class="pop-addr">${ico('map-pin')} ${esc(p.adresse||'Adresse non précisée')}</div>
     <span class="badge ${p.etat==='Accordé'?'acc':p.etat==='Refusé'?'ref':'enc'}">${esc(p.etat||'—')}</span>
     <div style="margin-top:9px"><span class="pop-link" onclick="openDetail('${esc(p.id).replace(/'/g,"\\'")}')">Voir les détails →</span></div>`);
@@ -1986,7 +1985,8 @@ function renderDetailBody(p){
     html+=field('🧭 Coordonnées GPS',`${p.geo_point_2d.lat.toFixed(6)}, ${p.geo_point_2d.lon.toFixed(6)}`);
     return html;
   }
-  /* ---------- Onglet INFOS (accès libre) ---------- */
+  /* ---------- Onglet INFOS ---------- */
+  if(!isUnlocked)return lockboxHTML(id,'Informations &amp; contacts verrouillés<br>Service urbanisme compétent, coordonnées directes, liens cadastre &amp; Géoportail, statistiques d\'arrondissement.');
   const mairie=mairieInfo(p.commune);
   const lat=p.geo_point_2d.lat,lon=p.geo_point_2d.lon;
   const arrP=permits.filter(x=>x.commune===p.commune);
@@ -2018,7 +2018,7 @@ function openDetail(id,tab){
   const isUnlocked=unlocked.has(id);
   $('detailContent').innerHTML=`
     <div class="dp-card">
-      <div class="dp-ref-row"><span class="dp-ref">${esc(p.nom_dossier)}</span>${badge}</div>
+      <div class="dp-ref-row"><span class="dp-ref">${isUnlocked ? esc(p.nom_dossier) : '<span style="display:inline-flex;align-items:center;gap:4px">🔒 Référence protégée</span>'}</span>${badge}</div>
       <div class="dp-title">${esc(p.type_dossier||'Dossier d\'urbanisme')}</div>
       <div class="dp-addr">${ico('map-pin')} <span>${esc(p.adresse||'Adresse non précisée')}</span></div>
       ${isUnlocked ? `

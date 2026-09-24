@@ -248,6 +248,14 @@ html.dark #map{background:#0d1020}
 .admin-table .t-actions button{padding:5px 9px;border-radius:8px;font-size:12px;font-weight:700}
 .admin-table .t-edit{color:var(--accent)}
 .admin-table .t-del{color:var(--red)}
+.users-table th{padding:10px 10px;font-size:11px}
+.users-table td{padding:9px 10px;font-size:12px}
+.admin-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.admin-kpi-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow-sm)}
+.admin-kpi-card .kpi-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.admin-kpi-card .kpi-num{font-size:22px;font-weight:800;font-family:var(--font-display);color:var(--text);margin-top:4px}
+.admin-filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
 .login-box{max-width:400px;margin:60px auto;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:36px;box-shadow:var(--shadow)}
 .login-box h2{font-size:20px;font-weight:800;margin-bottom:6px}
 .login-box .sub{font-size:13px;color:var(--text2);margin-bottom:22px}
@@ -1532,6 +1540,141 @@ html.dark .modal-overlay{background:rgba(0,0,0,.72)}
   </div>
 </div>
 
+<!-- ===== MODAL ADMIN AJOUTER UTILISATEUR ===== -->
+<div class="modal-overlay" id="adminAddUserModal">
+  <div class="modal" style="max-width:480px">
+    <button class="icon-btn m-close" onclick="closeModal('adminAddUserModal')">✕</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px">
+        <i data-lucide="user-plus"></i>
+      </div>
+      <div>
+        <h2 style="font-size:18px;margin:0">Ajouter un utilisateur</h2>
+        <div style="font-size:12.5px;color:var(--text2)">Enregistrer un nouveau compte dans la plateforme</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Nom complet ou Raison sociale</label>
+      <input type="text" id="admNewName" placeholder="Ex : Cabinet Archi IDF ou Jean Dupont" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Adresse e-mail <span style="color:var(--red)">*</span></label>
+      <input type="email" id="admNewEmail" placeholder="jean.dupont@exemple.com" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Rôle / Profil</label>
+        <select id="admNewRole" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;color:var(--text);outline:none">
+          <option value="Particulier">Particulier</option>
+          <option value="Architecte">Architecte</option>
+          <option value="Promoteur">Promoteur</option>
+          <option value="Collectivité">Collectivité</option>
+          <option value="Administrateur">Administrateur</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Statut initial</label>
+        <select id="admNewStatus" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;color:var(--text);outline:none">
+          <option value="Actif">Actif</option>
+          <option value="Suspendu">Suspendu</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Crédits attribués</label>
+        <input type="number" id="admNewCredits" value="5" min="0" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Montant dépensé (€)</label>
+        <input type="number" id="admNewSpent" value="0" min="0" step="1" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('adminAddUserModal')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNewAdminUser()">Enregistrer l'utilisateur</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ADMIN AJUSTER CRÉDITS ===== -->
+<div class="modal-overlay" id="adminEditCreditsModal">
+  <div class="modal" style="max-width:460px">
+    <button class="icon-btn m-close" onclick="closeModal('adminEditCreditsModal')">✕</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px">
+        <i data-lucide="coins"></i>
+      </div>
+      <div>
+        <h2 style="font-size:18px;margin:0">Gérer les crédits</h2>
+        <div style="font-size:12.5px;color:var(--text2)"><span id="admCredUserName" style="font-weight:700"></span> (<span id="admCredUserEmail"></span>)</div>
+      </div>
+    </div>
+    
+    <div style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;font-weight:700">Solde actuel</div>
+        <div id="admCredCurrent" style="font-size:18px;font-weight:800;color:var(--accent)"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;font-weight:700">Montant dépensé</div>
+        <div id="admCredCurrentSpent" style="font-size:16px;font-weight:800;color:var(--green-text)"></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Opération</label>
+      <select id="admCredMode" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;color:var(--text);outline:none">
+        <option value="add">➕ Ajouter des crédits</option>
+        <option value="sub">➖ Déduire des crédits</option>
+        <option value="set">✏️ Définir le solde exact</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Nombre de crédits</label>
+      <input type="number" id="admCredAmount" value="10" min="0" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:14px;font-weight:700;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+
+    <!-- Quick action buttons -->
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="btn btn-ghost" style="flex:1;padding:6px 0;font-size:12px" onclick="quickSetCreditAdd(5)">+5</button>
+      <button class="btn btn-ghost" style="flex:1;padding:6px 0;font-size:12px" onclick="quickSetCreditAdd(20)">+20</button>
+      <button class="btn btn-ghost" style="flex:1;padding:6px 0;font-size:12px" onclick="quickSetCreditAdd(50)">+50</button>
+      <button class="btn btn-ghost" style="flex:1;padding:6px 0;font-size:12px" onclick="quickSetCreditAdd(100)">+100</button>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px">Ajouter au montant dépensé (€) <span style="font-weight:400;color:var(--text3)">(optionnel)</span></label>
+      <input type="number" id="admCredSpentAdj" value="0" min="0" step="1" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel2);font-size:13px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('adminEditCreditsModal')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveUserCreditsAdjustment()">Mettre à jour</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ADMIN SUPPRIMER UTILISATEUR ===== -->
+<div class="modal-overlay" id="adminDeleteUserModal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <button class="icon-btn m-close" onclick="closeModal('adminDeleteUserModal')">✕</button>
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--red-soft);color:var(--red-text);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px">
+      <i data-lucide="trash-2"></i>
+    </div>
+    <h2 style="font-size:19px;margin-bottom:6px">Retirer cet utilisateur ?</h2>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5">
+      Êtes-vous sûr de vouloir supprimer <b id="admDelUserName"></b> (<span id="admDelUserEmail"></span>) de la liste des utilisateurs ?
+      Cette action retirera ses accès et ses crédits enregistrés.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('adminDeleteUserModal')">Annuler</button>
+      <button class="btn" style="flex:1;background:var(--red);color:#fff;border-color:var(--red)" onclick="deleteAdminUser()">Confirmer la suppression</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <!-- ===== NAVIGATION MOBILE (BOTTOM BAR) ===== -->
@@ -2408,6 +2551,7 @@ function unlockPermit(id){
     openCreditsModal();return;
   }
   saveUserCredits(credits - 1);unlocked.add(id);saveState();
+  if(typeof trackUserUnlock==='function') trackUserUnlock();
   toast('🔓 Fiche débloquée · −1 crédit','ok');
   openDetail(id,detailTab);
 }
@@ -3013,18 +3157,7 @@ function renderAdminTab(){
       </div>`;
   }
   if(adminTab==='users'){
-    const users=[
-      ['Marie Lambert','marie.l@ville-paris.fr','Administrateur','Actif'],
-      ['Karim Benda','k.benda@urbaconseil.fr','Éditeur','Actif'],
-      ['Sophie Chen','s.chen@promoteur-idf.fr','Lecteur Premium','Actif'],
-      ['Jean Perrin','j.perrin@gmail.com','Lecteur','Suspendu']];
-    c.innerHTML=`
-      <div class="section-title">Gestion des utilisateurs</div>
-      <table class="admin-table"><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Statut</th><th></th></tr></thead><tbody>
-      ${users.map(u=>`<tr><td style="font-weight:700">${u[0]}</td><td>${u[1]}</td><td>${u[2]}</td>
-        <td><span class="badge ${u[3]==='Actif'?'acc':'ref'}">${u[3]}</span></td>
-        <td class="t-actions"><button class="t-edit" onclick="toast('✏️ Gestion des droits — version connectée au backend')">Droits</button></td></tr>`).join('')}
-      </tbody></table>`;
+    renderAdminUsersTab(c);
   }
   if(adminTab==='reports'){
     c.innerHTML=`
@@ -3077,6 +3210,472 @@ function adminDelete(id){
   toast('🗑️ Dossier supprimé (session locale uniquement)','ok');
 }
 function adminResync(){toast('🔄 Resynchronisation depuis Paris Data…');loadData()}
+
+/* ================= GESTION DES UTILISATEURS (ADMIN) ================= */
+
+const DEFAULT_ADMIN_USERS = [
+  {
+    id: 'usr_admin_1',
+    name: 'Teddy Corona',
+    email: 'teddycoronak@gmail.com',
+    role: 'Administrateur',
+    credits: 500,
+    creditsSpent: 42,
+    amountSpent: 129,
+    dateJoined: '2026-01-10',
+    status: 'Actif'
+  },
+  {
+    id: 'usr_archi_1',
+    name: 'Atelier Architecture & Urbanisme IDF',
+    email: 'contact@atelier-archi-idf.fr',
+    role: 'Architecte',
+    credits: 85,
+    creditsSpent: 65,
+    amountSpent: 78,
+    dateJoined: '2026-02-03',
+    status: 'Actif'
+  },
+  {
+    id: 'usr_prom_1',
+    name: 'Groupe Promotion Grand Paris',
+    email: 'urbanisme@promoteur-grandparis.com',
+    role: 'Promoteur',
+    credits: 420,
+    creditsSpent: 180,
+    amountSpent: 168,
+    dateJoined: '2026-02-18',
+    status: 'Actif'
+  },
+  {
+    id: 'usr_part_1',
+    name: 'Julien Mercier (Projet Rénovation)',
+    email: 'julien.mercier75@gmail.com',
+    role: 'Particulier',
+    credits: 4,
+    creditsSpent: 6,
+    amountSpent: 9,
+    dateJoined: '2026-03-01',
+    status: 'Actif'
+  },
+  {
+    id: 'usr_coll_1',
+    name: 'Direction Urbanisme Commune 92',
+    email: 'service.urbanisme@mairie92.fr',
+    role: 'Collectivité',
+    credits: 1850,
+    creditsSpent: 350,
+    amountSpent: 258,
+    dateJoined: '2026-01-22',
+    status: 'Actif'
+  },
+  {
+    id: 'usr_part_2',
+    name: 'Claire Fontaine',
+    email: 'claire.fontaine.pro@orange.fr',
+    role: 'Particulier',
+    credits: 0,
+    creditsSpent: 5,
+    amountSpent: 0,
+    dateJoined: '2026-03-15',
+    status: 'Suspendu'
+  }
+];
+
+let adminUserSearchQuery = '';
+let adminUserStatusFilter = 'all';
+let adminUserRoleFilter = 'all';
+let adminTargetUserId = null;
+
+function getAdminUsers() {
+  let list = store.get('admin_users', null);
+  if (!list || !Array.isArray(list) || !list.length) {
+    list = JSON.parse(JSON.stringify(DEFAULT_ADMIN_USERS));
+  }
+  // Synchroniser currentUser s'il est connecté
+  if (currentUser && currentUser.email) {
+    const curEmail = currentUser.email.toLowerCase();
+    const existing = list.find(u => u.email && u.email.toLowerCase() === curEmail);
+    if (existing) {
+      existing.credits = credits;
+    } else {
+      list.unshift({
+        id: currentUser.id || ('usr_' + Date.now()),
+        name: currentUser.email.split('@')[0],
+        email: currentUser.email,
+        role: 'Utilisateur connecté',
+        credits: credits,
+        creditsSpent: unlocked.size,
+        amountSpent: 0,
+        dateJoined: new Date().toISOString().split('T')[0],
+        status: 'Actif'
+      });
+    }
+  }
+  return list;
+}
+
+function saveAdminUsers(list) {
+  store.set('admin_users', list);
+}
+
+function renderAdminUsersTab(c) {
+  if (!c) c = $('adminContent');
+  if (!c) return;
+
+  const users = getAdminUsers();
+  const totalUsers = users.length;
+  const activeUsers = users.filter(u => u.status === 'Actif').length;
+  const totalCredits = users.reduce((sum, u) => sum + (parseInt(u.credits, 10) || 0), 0);
+  const totalSpentCredits = users.reduce((sum, u) => sum + (parseInt(u.creditsSpent, 10) || 0), 0);
+  const totalAmountSpent = users.reduce((sum, u) => sum + (parseFloat(u.amountSpent) || 0), 0);
+
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <div>
+        <div class="section-title" style="margin:0 0 4px 0">Gestion des utilisateurs <span style="font-size:12px;color:var(--text3);font-weight:600">(${totalUsers} au total)</span></div>
+        <div style="font-size:13px;color:var(--text2)">
+          Visualisez tous les comptes, consultez leur solde de crédits et leurs dépenses, ajoutez ou retirez des utilisateurs.
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openAdminAddUserModal()" style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;font-size:13px;border-radius:10px;box-shadow:0 4px 12px rgba(109,77,246,0.25)">
+        <i data-lucide="user-plus" style="width:16px;height:16px"></i> ＋ Ajouter un utilisateur
+      </button>
+    </div>
+
+    <!-- Grille KPI Récapitulative -->
+    <div class="admin-kpi-grid">
+      <div class="admin-kpi-card">
+        <div class="kpi-label">👥 Utilisateurs enregistrés</div>
+        <div class="kpi-num">${fmtNum(totalUsers)} <span style="font-size:12px;font-weight:600;color:var(--green-text);margin-left:4px">(${activeUsers} actifs)</span></div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:4px">Comptes sur la plateforme</div>
+      </div>
+      <div class="admin-kpi-card">
+        <div class="kpi-label">⚡ Crédits disponibles</div>
+        <div class="kpi-num" style="color:var(--accent)">${fmtNum(totalCredits)} <span style="font-size:12px;font-weight:600;color:var(--text3)">crédits</span></div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:4px">Solde total en circulation</div>
+      </div>
+      <div class="admin-kpi-card">
+        <div class="kpi-label">🔓 Crédits dépensés</div>
+        <div class="kpi-num" style="color:var(--blue-text)">${fmtNum(totalSpentCredits)} <span style="font-size:12px;font-weight:600;color:var(--text3)">dossiers</span></div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:4px">Fiches débloquées par les utilisateurs</div>
+      </div>
+      <div class="admin-kpi-card">
+        <div class="kpi-label">💶 Montant total dépensé</div>
+        <div class="kpi-num" style="color:var(--green-text)">${totalAmountSpent.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:4px">Achats de packs via Stripe</div>
+      </div>
+    </div>
+
+    <!-- Barre de filtres et recherche -->
+    <div class="admin-filter-bar">
+      <div style="flex:1;min-width:240px;position:relative">
+        <input type="text" id="adminUserSearch" value="${esc(adminUserSearchQuery)}" placeholder="Rechercher par nom, e-mail, rôle..." style="width:100%;padding:10px 14px 10px 34px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel);font-size:13px;outline:none" oninput="adminUserSearchQuery=this.value;renderAdminUsersTable()">
+        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:13px">🔍</span>
+      </div>
+      <select id="adminUserRoleFilter" style="padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel);font-size:13px;color:var(--text);outline:none" onchange="adminUserRoleFilter=this.value;renderAdminUsersTable()">
+        <option value="all" ${adminUserRoleFilter==='all'?'selected':''}>Tous les rôles</option>
+        <option value="Architecte" ${adminUserRoleFilter==='Architecte'?'selected':''}>Architecte</option>
+        <option value="Promoteur" ${adminUserRoleFilter==='Promoteur'?'selected':''}>Promoteur</option>
+        <option value="Particulier" ${adminUserRoleFilter==='Particulier'?'selected':''}>Particulier</option>
+        <option value="Collectivité" ${adminUserRoleFilter==='Collectivité'?'selected':''}>Collectivité</option>
+        <option value="Administrateur" ${adminUserRoleFilter==='Administrateur'?'selected':''}>Administrateur</option>
+      </select>
+      <select id="adminUserStatusFilter" style="padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel);font-size:13px;color:var(--text);outline:none" onchange="adminUserStatusFilter=this.value;renderAdminUsersTable()">
+        <option value="all" ${adminUserStatusFilter==='all'?'selected':''}>Tous les statuts</option>
+        <option value="Actif" ${adminUserStatusFilter==='Actif'?'selected':''}>Actifs uniquement</option>
+        <option value="Suspendu" ${adminUserStatusFilter==='Suspendu'?'selected':''}>Suspendus uniquement</option>
+      </select>
+      ${(adminUserSearchQuery || adminUserRoleFilter !== 'all' || adminUserStatusFilter !== 'all') ? `
+        <button class="btn btn-ghost" style="padding:9px 12px;font-size:12px" onclick="adminUserSearchQuery='';adminUserRoleFilter='all';adminUserStatusFilter='all';renderAdminTab()">
+          Effacer
+        </button>` : ''}
+    </div>
+
+    <!-- Table des utilisateurs -->
+    <div id="adminUsersTableWrap" style="overflow-x:auto"></div>
+  `;
+
+  renderAdminUsersTable();
+  refreshIcons(c);
+}
+
+function renderAdminUsersTable() {
+  const wrap = $('adminUsersTableWrap');
+  if (!wrap) return;
+
+  const users = getAdminUsers();
+  const q = (adminUserSearchQuery || '').toLowerCase().trim();
+
+  const filteredUsers = users.filter(u => {
+    const matchSearch = !q ||
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.role && u.role.toLowerCase().includes(q));
+    const matchStatus = adminUserStatusFilter === 'all' || u.status === adminUserStatusFilter;
+    const matchRole = adminUserRoleFilter === 'all' || u.role === adminUserRoleFilter;
+    return matchSearch && matchStatus && matchRole;
+  });
+
+  if (!filteredUsers.length) {
+    wrap.innerHTML = `
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:36px;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">👥</div>
+        <div style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px">Aucun utilisateur trouvé</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Aucun compte ne correspond à vos filtres de recherche.</div>
+        <button class="btn btn-ghost" onclick="adminUserSearchQuery='';adminUserRoleFilter='all';adminUserStatusFilter='all';renderAdminTab()">Effacer les filtres</button>
+      </div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table class="admin-table users-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Adresse e-mail</th>
+          <th>Rôle</th>
+          <th>Solde</th>
+          <th>Dépenses</th>
+          <th>Total (€)</th>
+          <th>Statut</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filteredUsers.map(u => {
+          const uId = esc(u.id).replace(/'/g, "\\'");
+          const uEmail = esc(u.email).replace(/'/g, "\\'");
+          const initial = (u.name || u.email || 'U').charAt(0).toUpperCase();
+          const amountStr = (parseFloat(u.amountSpent) || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+          return `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div class="user-avatar">${initial}</div>
+                  <div>
+                    <div style="font-weight:700;color:var(--text);font-size:12.5px">${esc(u.name || 'Sans nom')}</div>
+                    <div style="font-size:10.5px;color:var(--text3)">Inscrit le ${u.dateJoined ? fmtDate(u.dateJoined) : '—'}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display:inline-flex;align-items:center;gap:5px">
+                  <a href="mailto:${esc(u.email)}" style="color:var(--accent);font-weight:600;font-size:12px;text-decoration:none" title="Envoyer un e-mail">
+                    ${esc(u.email)}
+                  </a>
+                  <button class="icon-btn" title="Copier l'adresse e-mail" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;background:var(--panel2);cursor:pointer;font-size:10px" onclick="copyEmailToClipboard('${uEmail}')">
+                    📋
+                  </button>
+                </div>
+              </td>
+              <td>
+                <span class="badge" style="background:var(--panel2);border:1px solid var(--border);color:var(--text2);font-weight:600;font-size:11px">
+                  ${esc(u.role || 'Utilisateur')}
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:12px;padding:4px 8px;border-radius:7px">
+                  ⚡ ${fmtNum(u.credits || 0)}
+                </span>
+              </td>
+              <td>
+                <div style="font-weight:700;color:var(--text);font-size:12px">${fmtNum(u.creditsSpent || 0)} dossiers</div>
+                <div style="font-size:10.5px;color:var(--text3)">débloqués</div>
+              </td>
+              <td>
+                <div style="font-weight:800;color:var(--green-text);font-size:12.5px">${amountStr}</div>
+                <div style="font-size:10.5px;color:var(--text3)">achats CB</div>
+              </td>
+              <td>
+                <button class="badge ${u.status === 'Actif' ? 'acc' : 'ref'}" style="cursor:pointer;border:none;font-weight:700;font-size:11px" title="Cliquer pour changer le statut" onclick="toggleUserStatus('${uId}')">
+                  ${u.status === 'Actif' ? '● Actif' : '✕ Suspendu'}
+                </button>
+              </td>
+              <td class="t-actions" style="text-align:right;white-space:nowrap">
+                <button class="t-edit" style="display:inline-flex;align-items:center;gap:3px;padding:5px 8px;border-radius:7px;background:var(--accent-soft);border:1px solid var(--accent-soft);font-size:11px" title="Gérer ou attribuer des crédits" onclick="openAdminCreditModal('${uId}')">
+                  ⚡ Crédits
+                </button>
+                <button class="t-del" style="display:inline-flex;align-items:center;gap:3px;padding:5px 8px;border-radius:7px;background:var(--red-soft);border:1px solid rgba(239,68,68,0.2);color:var(--red-text);margin-left:3px;font-size:11px" title="Supprimer cet utilisateur" onclick="confirmDeleteUser('${uId}')">
+                  🗑️ Retirer
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function copyEmailToClipboard(email) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(email).then(() => {
+      toast(`📋 E-mail copié : ${email}`, 'ok');
+    }).catch(() => toast(email));
+  } else {
+    toast(email);
+  }
+}
+
+function openAdminAddUserModal() {
+  $('admNewName').value = '';
+  $('admNewEmail').value = '';
+  $('admNewRole').value = 'Particulier';
+  $('admNewCredits').value = '5';
+  $('admNewSpent').value = '0';
+  $('admNewStatus').value = 'Actif';
+  $('adminAddUserModal').classList.add('open');
+  setTimeout(() => $('admNewName').focus(), 100);
+}
+
+function saveNewAdminUser() {
+  const name = $('admNewName').value.trim();
+  const email = $('admNewEmail').value.trim().toLowerCase();
+  const role = $('admNewRole').value;
+  const creditsVal = parseInt($('admNewCredits').value, 10);
+  const spentVal = parseFloat($('admNewSpent').value) || 0;
+  const status = $('admNewStatus').value;
+
+  if (!email || !email.includes('@')) {
+    toast('❌ Veuillez renseigner une adresse e-mail valide', 'err');
+    return;
+  }
+
+  const users = getAdminUsers();
+  if (users.some(u => u.email && u.email.toLowerCase() === email)) {
+    toast('⚠️ Un utilisateur avec cette adresse e-mail existe déjà', 'err');
+    return;
+  }
+
+  const newUser = {
+    id: 'usr_' + Date.now(),
+    name: name || email.split('@')[0],
+    email: email,
+    role: role,
+    credits: isNaN(creditsVal) || creditsVal < 0 ? 0 : creditsVal,
+    creditsSpent: 0,
+    amountSpent: spentVal < 0 ? 0 : spentVal,
+    dateJoined: new Date().toISOString().split('T')[0],
+    status: status
+  };
+
+  users.unshift(newUser);
+  saveAdminUsers(users);
+  closeModal('adminAddUserModal');
+  renderAdminUsersTab();
+  toast(`✅ Utilisateur « ${newUser.name} » ajouté avec succès`, 'ok');
+}
+
+function openAdminCreditModal(userId) {
+  const users = getAdminUsers();
+  const u = users.find(x => x.id === userId);
+  if (!u) return;
+
+  adminTargetUserId = userId;
+  $('admCredUserName').innerText = u.name;
+  $('admCredUserEmail').innerText = u.email;
+  $('admCredCurrent').innerText = fmtNum(u.credits || 0) + ' crédits';
+  $('admCredCurrentSpent').innerText = (parseFloat(u.amountSpent) || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+  $('admCredMode').value = 'add';
+  $('admCredAmount').value = '10';
+  $('admCredSpentAdj').value = '0';
+
+  $('adminEditCreditsModal').classList.add('open');
+}
+
+function quickSetCreditAdd(amount) {
+  $('admCredMode').value = 'add';
+  $('admCredAmount').value = amount;
+}
+
+function saveUserCreditsAdjustment() {
+  if (!adminTargetUserId) return;
+  const users = getAdminUsers();
+  const u = users.find(x => x.id === adminTargetUserId);
+  if (!u) return;
+
+  const mode = $('admCredMode').value;
+  const amount = parseInt($('admCredAmount').value, 10);
+  const spentAdj = parseFloat($('admCredSpentAdj').value) || 0;
+
+  if (isNaN(amount) || amount < 0) {
+    toast('❌ Veuillez saisir un nombre de crédits valide', 'err');
+    return;
+  }
+
+  if (mode === 'add') {
+    u.credits = (u.credits || 0) + amount;
+  } else if (mode === 'sub') {
+    u.credits = Math.max(0, (u.credits || 0) - amount);
+  } else if (mode === 'set') {
+    u.credits = amount;
+  }
+
+  if (spentAdj > 0) {
+    u.amountSpent = (u.amountSpent || 0) + spentAdj;
+  }
+
+  // Si l'utilisateur modifié est l'utilisateur actuellement connecté
+  if (currentUser && currentUser.email && currentUser.email.toLowerCase() === u.email.toLowerCase()) {
+    credits = u.credits;
+    updateCreditsUI();
+    saveUserCredits(credits);
+  }
+
+  saveAdminUsers(users);
+  closeModal('adminEditCreditsModal');
+  renderAdminUsersTab();
+  toast(`⚡ Solde de « ${u.name} » mis à jour : ${fmtNum(u.credits)} crédits`, 'ok');
+}
+
+function toggleUserStatus(userId) {
+  const users = getAdminUsers();
+  const u = users.find(x => x.id === userId);
+  if (!u) return;
+
+  u.status = u.status === 'Actif' ? 'Suspendu' : 'Actif';
+  saveAdminUsers(users);
+  renderAdminUsersTable();
+  toast(`Statut de ${u.name} : ${u.status}`, 'ok');
+}
+
+function confirmDeleteUser(userId) {
+  const users = getAdminUsers();
+  const u = users.find(x => x.id === userId);
+  if (!u) return;
+
+  adminTargetUserId = userId;
+  $('admDelUserName').innerText = u.name;
+  $('admDelUserEmail').innerText = u.email;
+  $('adminDeleteUserModal').classList.add('open');
+}
+
+function deleteAdminUser() {
+  if (!adminTargetUserId) return;
+  let users = getAdminUsers();
+  const u = users.find(x => x.id === adminTargetUserId);
+  const userName = u ? u.name : 'Utilisateur';
+
+  users = users.filter(x => x.id !== adminTargetUserId);
+  saveAdminUsers(users);
+  closeModal('adminDeleteUserModal');
+  renderAdminUsersTab();
+  toast(`🗑️ « ${userName} » a été retiré de la liste`, 'ok');
+}
+
+function trackUserUnlock() {
+  const users = getAdminUsers();
+  const email = currentUser ? currentUser.email : (clientAuth ? 'client@exemple.com' : null);
+  if (email) {
+    const u = users.find(x => x.email && x.email.toLowerCase() === email.toLowerCase());
+    if (u) {
+      u.credits = credits;
+      u.creditsSpent = (u.creditsSpent || 0) + 1;
+      saveAdminUsers(users);
+    }
+  }
+}
 
 /* ================= DONNÉES DE DÉMONSTRATION (secours hors-ligne) ================= */
 const DEMO_DATA=[

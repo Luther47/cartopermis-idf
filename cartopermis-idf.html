@@ -118,6 +118,7 @@ html.dark #map{background:#0d1020}
 .map-style-switch button{padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--text2)}
 .map-style-switch button.active{background:var(--accent);color:#fff}
 .leaflet-container{font-family:inherit}
+.dark-tiles{filter:invert(100%) hue-rotate(190deg) brightness(88%) contrast(115%) saturate(0.35)}
 .pmarker{border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(109,77,246,.25)!important}
 .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:var(--accent)!important;color:#fff!important;font-weight:700;font-family:inherit}
@@ -1766,10 +1767,8 @@ function initMap(){
   map=L.map('map',{zoomControl:false,attributionControl:true}).setView([48.8566,2.3422],13);
   L.control.zoom({position:'bottomright'}).addTo(map);
   baseOSM=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
-  const darkBase=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri, HERE, Garmin, © OpenStreetMap'});
-  const darkRef=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
-  baseDark=L.layerGroup([darkBase,darkRef]);
-  baseSat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri, Maxar, Earthstar Geographics'});
+  baseDark=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap',className:'dark-tiles'});
+  baseSat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:18,maxZoom:19,attribution:'© Esri, Maxar, Earthstar Geographics'});
   (document.documentElement.classList.contains('dark')?baseDark:baseOSM).addTo(map);
   // repli automatique si le plugin markercluster n'a pas pu être chargé
   clusterGroup=(typeof L.markerClusterGroup==='function')
